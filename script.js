@@ -89,11 +89,12 @@ async function picarPonto(tipo) {
 
             if (registoResponse.ok) {
                 const mensagemSucesso = document.getElementById('mensagem-sucesso');
-                mensagemSucesso.style.display = 'block'; 
+                mensagemSucesso.style.display = 'block';
                 setTimeout(() => {
                     mensagemSucesso.style.display = 'none';
                 }, 3500);
-            }else {alert('Erro ao registar entrada.');
+            } else {
+                alert('Erro ao registar entrada.');
             }
         } else if (tipo === 'entradaAlmoco') {
             if (!registoExistente || registoExistente.entradaAlmoco) {
@@ -113,7 +114,7 @@ async function picarPonto(tipo) {
 
             if (registoResponse.ok) {
                 const mensagemSucesso = document.getElementById('mensagem-sucesso');
-                mensagemSucesso.style.display = 'block'; 
+                mensagemSucesso.style.display = 'block';
                 setTimeout(() => {
                     mensagemSucesso.style.display = 'none';
                 }, 3500);
@@ -139,7 +140,7 @@ async function picarPonto(tipo) {
 
             if (registoResponse.ok) {
                 const mensagemSucesso = document.getElementById('mensagem-sucesso');
-                mensagemSucesso.style.display = 'block'; 
+                mensagemSucesso.style.display = 'block';
                 setTimeout(() => {
                     mensagemSucesso.style.display = 'none';
                 }, 3500);
@@ -282,7 +283,6 @@ async function carregarHorarios(nomeFiltro = '', dataFiltro = '') {
 
             // Filtro por data (comparando com o formato YYYY-MM-DD)
             const dataMatch = dataFiltro ? formatarDataParaYYYYMMDD(registo.data) === dataFiltro : true;
-
             return nomeMatch && dataMatch;
         });
 
@@ -333,8 +333,8 @@ function logout() {
 function admin() {
     // Redefine o estado da página
     isAdmin = false;
-    document.getElementById('admin-area').style.display = 'none'; 
+    document.getElementById('admin-area').style.display = 'none';
     document.getElementById('registo-ponto-area').style.display = 'none';
-    document.getElementById('login-area').style.display = 'block'; 
+    document.getElementById('login-area').style.display = 'block';
 }
 
