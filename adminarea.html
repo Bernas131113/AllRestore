@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="AllRestore-Logotipo-T180px.png" type="image/png">
+    <title>AllRestore Registo Entrada</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.2/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <img src="AllRestore-Logotipo-T180px.png" alt="Logo" class="logo">
+        </div>
+        <div id="admin-area">
+            <h1 class="h1-subclass">Área de Administração</h1>
+            <button onclick="downloadExcel()" class="btn btn-yellow btn-full">Download Excel</button>
+            <button onclick="window.location.href='index.html'" class="btn btn-red btn-full">Sair</button>
+            <div class="filter">
+                <input type="text" id="filtro-nome" placeholder="Pesquisar por nome">
+                <input type="date" id="filtro-data" placeholder="Pesquisar por data (DD/MM/AAAA)">
+            </div>
+            <div class="flex-center">
+                <button onclick="aplicarFiltros()" class="btn btn-orange btn-full">Filtrar</button>
+            </div>
+
+            <div id="tabela-horarios-wrapper">
+                <table id="tabela-horarios">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Data</th>
+                            <th>Hora Entrada</th>
+                            <th>Entrada Almoço</th>
+                            <th>Saída Almoço</th>
+                            <th>Hora Saída</th>
+                            <th>Total De Horas</th>
+                            <th>Localização</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <script src="script.js"></script>
+</body>
+
+</html>
