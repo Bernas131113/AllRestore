@@ -79,7 +79,7 @@ async function verificarCredenciaisEscritorio() {
     { escritorioutilizador: 'Marta Pequeno', escritorioPassword: 'misap13' },
     { escritorioutilizador: 'Sergio Pequeno', escritorioPassword: 'allrestore' },
     { escritorioutilizador: 'Bernardo Alves', escritorioPassword: '1311' },
-    { escritorioutilizador: 'Sandra Bexiga', escritorioPassword: 'teste' },
+    { escritorioutilizador: 'Sandra Bexiga', escritorioPassword: 'sbexiga' },
     { escritorioutilizador: 'Pedro Leitão', escritorioPassword: '1993' },
   ];
 
@@ -302,6 +302,13 @@ async function carregarNomes() {
 function salvarLocalizacao() {
   return new Promise((resolve) => {
     if (navigator.geolocation) {
+      // Configura a geolocalização com opções para maior precisão
+      const options = {
+        enableHighAccuracy: true,  // Ativa a maior precisão possível
+        timeout: 5000,             // Tempo limite para tentar obter a localização (5 segundos)
+        maximumAge: 0             // Não utiliza dados antigos
+      };
+
       navigator.geolocation.getCurrentPosition(function (position) {
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
@@ -370,13 +377,15 @@ function salvarLocalizacao() {
       }, error => {
         console.error('Erro na geolocalização:', error);
         resolve(null);
-      });
+      }, options);  // Passa as opções para melhorar a precisão
     } else {
       console.error('Geolocalização não é suportada pelo navegador.');
       resolve(null);
     }
   });
 }
+
+
 
 
 function formatarDuracao(horaEntrada, horaSaida, horaEntradaAlmoco, horaSaidaAlmoco) {
