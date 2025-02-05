@@ -111,6 +111,15 @@ h1 {
     background: #ff9900;
     transform: scale(1.02);
 }
+.btn-blue4 {
+    background: #7b92fa;
+    color: white;
+}
+
+.btn-blue4:hover {
+    background: #7b92fa;
+    transform: scale(1.02);
+}
 
 .btn-blue {
     background: #7b92fa;
@@ -627,7 +636,14 @@ input:focus {
         /* Defina um height fixo */
         padding: 10px 20px;
     }
+    .btn-blue4 {
+        margin-top: -22px;
+        line-height: 10px;
+        height: 30px;
+        padding: 10px 20px;
+    }
     
+   
 
     /* Ajustes nos inputs */
     input[type="text"],
