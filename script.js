@@ -1,26 +1,26 @@
 let isAdmin = false;
 document.addEventListener("DOMContentLoaded", function () {
-  let pinCorreto = "8888"; 
+  let pinCorreto = "8888";
 
-  
+
   if (window.location.pathname === "/" || window.location.pathname.endsWith("index.html")) {
-      
-      
-      if (!localStorage.getItem("acessoLiberado")) {
-          function pedirPIN() {
-              let pinDigitado = prompt("Introduza o PIN:");
 
-              if (pinDigitado === pinCorreto) {
-                  localStorage.setItem("acessoLiberado", "true"); 
-                  
-              } else {
-                  alert("PIN incorreto! Tente novamente.");
-                  pedirPIN(); 
-              }
-          }
 
-          pedirPIN(); 
+    if (!localStorage.getItem("acessoLiberado")) {
+      function pedirPIN() {
+        let pinDigitado = prompt("Introduza o PIN:");
+
+        if (pinDigitado === pinCorreto) {
+          localStorage.setItem("acessoLiberado", "true");
+
+        } else {
+          alert("PIN incorreto! Tente novamente.");
+          pedirPIN();
+        }
       }
+
+      pedirPIN();
+    }
   }
 });
 
@@ -297,6 +297,50 @@ async function carregarNomes() {
     console.error('Erro ao carregar nomes:', error);
   }
 }
+async function carregarObrasEMateriais() {
+  const selectObras = document.getElementById('obra');
+  const selectMaterial = document.getElementById('material');
+
+  if (!selectObras || !selectMaterial) return; // Sai se algum dos elementos não existir
+
+  try {
+    // Requisição única para obter os dados de obras
+    const response = await fetch('https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/obras');
+    const data = await response.json();
+
+    // Verifique se a chave "obras" existe na resposta
+    if (data && data.obras) {
+      // Preencher o select de obras
+      selectObras.innerHTML = '<option value="" selected>Selecione a obra</option>';
+      data.obras.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.obra;  // A chave "obra" é o valor da opção
+        option.textContent = item.obra;  // O texto da opção será o nome da obra
+        selectObras.appendChild(option);
+      });
+
+      // Preencher o select de materiais
+      selectMaterial.innerHTML = '<option value="" selected>Selecione o material</option>';
+      data.obras.forEach(item => {
+        if (item.material) {
+          const option = document.createElement('option');
+          option.value = item.material;  // O valor será o nome do material
+          option.textContent = item.material;  // O texto será o nome do material
+          selectMaterial.appendChild(option);
+        }
+      });
+
+    } else {
+      console.error('A chave "obras" não foi encontrada na resposta da API');
+    }
+  } catch (error) {
+    console.error('Erro ao carregar obras e materiais:', error);
+  }
+}
+
+
+
+
 
 
 function salvarLocalizacao() {
@@ -452,34 +496,34 @@ let editando = false;
 
 
 async function carregarHorarios(nomeFiltro = '', dataFiltro = '') {
-    try {
-        const response = await fetch('https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/horarios');
-        const data = await response.json();
-        console.log('Resposta da API:', data);
+  try {
+    const response = await fetch('https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/horarios');
+    const data = await response.json();
+    console.log('Resposta da API:', data);
 
-        const tabelaHorarios = document.getElementById('tabela-horarios').getElementsByTagName('tbody')[0];
-        tabelaHorarios.innerHTML = '';
+    const tabelaHorarios = document.getElementById('tabela-horarios').getElementsByTagName('tbody')[0];
+    tabelaHorarios.innerHTML = '';
 
-        // Filtra os dados conforme o nome e a data
-        const horariosFiltrados = data.horarios.filter(registo => {
-            const nomeMatch = registo.nome && registo.nome.toLowerCase().includes(nomeFiltro.toLowerCase());
-            const dataMatch = dataFiltro ? formatarDataParaYYYYMMDD(registo.data) === dataFiltro : true;
-            return nomeMatch && dataMatch;
-        });
+    // Filtra os dados conforme o nome e a data
+    const horariosFiltrados = data.horarios.filter(registo => {
+      const nomeMatch = registo.nome && registo.nome.toLowerCase().includes(nomeFiltro.toLowerCase());
+      const dataMatch = dataFiltro ? formatarDataParaYYYYMMDD(registo.data) === dataFiltro : true;
+      return nomeMatch && dataMatch;
+    });
 
-        // Ordena os horários pela data (mais recente para mais antiga)
-        horariosFiltrados.sort((a, b) => {
-            const dateA = new Date(formatarDataParaYYYYMMDD(a.data));
-            const dateB = new Date(formatarDataParaYYYYMMDD(b.data));
-            return dateB - dateA;  // Ordem decrescente (mais recente primeiro)
-        });
+    // Ordena os horários pela data (mais recente para mais antiga)
+    horariosFiltrados.sort((a, b) => {
+      const dateA = new Date(formatarDataParaYYYYMMDD(a.data));
+      const dateB = new Date(formatarDataParaYYYYMMDD(b.data));
+      return dateB - dateA;  // Ordem decrescente (mais recente primeiro)
+    });
 
-        // Exibe os horários na tabela
-        horariosFiltrados.forEach(registo => {
-            const tr = document.createElement('tr');
-            tr.dataset.id = registo.id; // Armazena o ID do registro
+    // Exibe os horários na tabela
+    horariosFiltrados.forEach(registo => {
+      const tr = document.createElement('tr');
+      tr.dataset.id = registo.id; // Armazena o ID do registro
 
-            tr.innerHTML = `
+      tr.innerHTML = `
                 <td contenteditable="false">${registo.nome}</td>
                 <td contenteditable="false">${registo.data}</td>
                 <td contenteditable="false">${registo.horaEntrada || 'Não picado'}</td>
@@ -488,92 +532,92 @@ async function carregarHorarios(nomeFiltro = '', dataFiltro = '') {
                 <td contenteditable="false">${registo.horaSaida || 'Não picado'}</td>
                 <td contenteditable="false">
                     ${registo.horaEntrada && registo.horaSaida
-                        ? formatarDuracao(registo.horaEntrada, registo.horaSaida, registo.entradaAlmoco, registo.saidaAlmoco)
-                        : 'N/A'}
+          ? formatarDuracao(registo.horaEntrada, registo.horaSaida, registo.entradaAlmoco, registo.saidaAlmoco)
+          : 'N/A'}
                 </td>
                 <td contenteditable="false">${registo.localizacao || 'Não picado'}</td>
             `;
-            tabelaHorarios.appendChild(tr);
-        });
+      tabelaHorarios.appendChild(tr);
+    });
 
-    } catch (error) {
-        alert('Erro ao carregar os horários.');
-        console.error(error);
-    }
+  } catch (error) {
+    alert('Erro ao carregar os horários.');
+    console.error(error);
+  }
 }
 
 // Habilita edição na tabela
 function habilitarEdicao() {
-    editando = true;
-    document.getElementById("editar-btn").style.display = "none";
-    document.getElementById("concluir-btn").style.display = "inline-block";
+  editando = true;
+  document.getElementById("editar-btn").style.display = "none";
+  document.getElementById("concluir-btn").style.display = "inline-block";
 
-    document.querySelectorAll("#tabela-horarios tbody tr td").forEach(td => {
-        td.contentEditable = "true";
-        td.style.backgroundColor = "#f8f9fa"; // Destaca as células editáveis
-    });
+  document.querySelectorAll("#tabela-horarios tbody tr td").forEach(td => {
+    td.contentEditable = "true";
+    td.style.backgroundColor = "#f8f9fa"; // Destaca as células editáveis
+  });
 }
 
 // Salvar edições no Sheety
 async function salvarEdicoes() {
-    editando = false;
-    document.getElementById("editar-btn").style.display = "inline-block";
-    document.getElementById("concluir-btn").style.display = "none";
+  editando = false;
+  document.getElementById("editar-btn").style.display = "inline-block";
+  document.getElementById("concluir-btn").style.display = "none";
 
-    document.querySelectorAll("#tabela-horarios tbody tr td").forEach(td => {
-        td.contentEditable = "false";
-        td.style.backgroundColor = "white"; // Remove destaque das células
-    });
+  document.querySelectorAll("#tabela-horarios tbody tr td").forEach(td => {
+    td.contentEditable = "false";
+    td.style.backgroundColor = "white"; // Remove destaque das células
+  });
 
-    const linhas = document.querySelectorAll("#tabela-horarios tbody tr");
+  const linhas = document.querySelectorAll("#tabela-horarios tbody tr");
 
-    for (const linha of linhas) {
-        const id = linha.dataset.id;
-        const dadosAtualizados = {};
+  for (const linha of linhas) {
+    const id = linha.dataset.id;
+    const dadosAtualizados = {};
 
-        // Verifica cada célula e adiciona ao objeto se a célula não estiver vazia
-        if (linha.cells[0].innerText.trim() !== 'Não picado' && linha.cells[0].innerText.trim() !== '') {
-            dadosAtualizados.nome = linha.cells[0].innerText;
-        }
-        if (linha.cells[1].innerText.trim() !== 'Não picado' && linha.cells[1].innerText.trim() !== '') {
-            dadosAtualizados.data = linha.cells[1].innerText;
-        }
-        if (linha.cells[2].innerText.trim() !== 'Não picado' && linha.cells[2].innerText.trim() !== '') {
-            dadosAtualizados.horaEntrada = linha.cells[2].innerText;
-        }
-        if (linha.cells[3].innerText.trim() !== 'Não picado' && linha.cells[3].innerText.trim() !== '') {
-            dadosAtualizados.entradaAlmoco = linha.cells[3].innerText;
-        }
-        if (linha.cells[4].innerText.trim() !== 'Não picado' && linha.cells[4].innerText.trim() !== '') {
-            dadosAtualizados.saidaAlmoco = linha.cells[4].innerText;
-        }
-        if (linha.cells[5].innerText.trim() !== 'Não picado' && linha.cells[5].innerText.trim() !== '') {
-            dadosAtualizados.horaSaida = linha.cells[5].innerText;
-        }
-        if (linha.cells[7].innerText.trim() !== 'Não picado' && linha.cells[7].innerText.trim() !== '') {
-            dadosAtualizados.localizacao = linha.cells[7].innerText;
-        }
-
-        // Se algum dado foi modificado, faça a requisição PUT
-        if (Object.keys(dadosAtualizados).length > 0) {
-            try {
-                const response = await fetch(`https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/horarios/${id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ horario: dadosAtualizados })
-                });
-
-                if (!response.ok) {
-                    alert(`Erro ao atualizar o registro com ID ${id}`);
-                }
-            } catch (error) {
-                console.error(`Erro ao atualizar ID ${id}:`, error);
-            }
-        }
+    // Verifica cada célula e adiciona ao objeto se a célula não estiver vazia
+    if (linha.cells[0].innerText.trim() !== 'Não picado' && linha.cells[0].innerText.trim() !== '') {
+      dadosAtualizados.nome = linha.cells[0].innerText;
+    }
+    if (linha.cells[1].innerText.trim() !== 'Não picado' && linha.cells[1].innerText.trim() !== '') {
+      dadosAtualizados.data = linha.cells[1].innerText;
+    }
+    if (linha.cells[2].innerText.trim() !== 'Não picado' && linha.cells[2].innerText.trim() !== '') {
+      dadosAtualizados.horaEntrada = linha.cells[2].innerText;
+    }
+    if (linha.cells[3].innerText.trim() !== 'Não picado' && linha.cells[3].innerText.trim() !== '') {
+      dadosAtualizados.entradaAlmoco = linha.cells[3].innerText;
+    }
+    if (linha.cells[4].innerText.trim() !== 'Não picado' && linha.cells[4].innerText.trim() !== '') {
+      dadosAtualizados.saidaAlmoco = linha.cells[4].innerText;
+    }
+    if (linha.cells[5].innerText.trim() !== 'Não picado' && linha.cells[5].innerText.trim() !== '') {
+      dadosAtualizados.horaSaida = linha.cells[5].innerText;
+    }
+    if (linha.cells[7].innerText.trim() !== 'Não picado' && linha.cells[7].innerText.trim() !== '') {
+      dadosAtualizados.localizacao = linha.cells[7].innerText;
     }
 
-    alert("Edições feitas!");
-    carregarHorarios(); 
+    // Se algum dado foi modificado, faça a requisição PUT
+    if (Object.keys(dadosAtualizados).length > 0) {
+      try {
+        const response = await fetch(`https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/horarios/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ horario: dadosAtualizados })
+        });
+
+        if (!response.ok) {
+          alert(`Erro ao atualizar o registro com ID ${id}`);
+        }
+      } catch (error) {
+        console.error(`Erro ao atualizar ID ${id}:`, error);
+      }
+    }
+  }
+
+  alert("Edições feitas!");
+  carregarHorarios();
 }
 
 
@@ -653,10 +697,20 @@ async function marcarComoTratada(id, botao) {
 async function registrarMaterial(event) {
   event.preventDefault();
 
+  // Pegando os valores do formulário
   const nome = document.getElementById('nome').value;
   const obra = document.getElementById('obra').value;
   const material = document.getElementById('material').value;
-  const dataAtual = new Date().toISOString().split('T')[0];
+  const quantidade = document.getElementById('quantidade').value; // Captura a quantidade
+  const dataAtual = new Date().toISOString().split('T')[0]; // Data no formato YYYY-MM-DD
+
+  if (!nome || !obra || !material || !quantidade) {
+    alert("Por favor, preencha todos os campos!");
+    return;
+  }
+
+  // Formatação do material com a quantidade
+  const materialComQuantidade = `${material} (Quantidade: ${quantidade})`;
 
   try {
     const response = await fetch('https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/encomendas', {
@@ -669,7 +723,7 @@ async function registrarMaterial(event) {
           nome: nome,
           data: dataAtual,
           obra: obra,
-          material: material,
+          material: materialComQuantidade, // Envia o material com a quantidade
           estadoAtual: false,
         },
       }),
@@ -680,7 +734,7 @@ async function registrarMaterial(event) {
     }
 
     alert('Material registrado com sucesso!');
-    document.getElementById('form-material').reset();
+    document.getElementById('form-material').reset(); // Reseta o formulário
   } catch (error) {
     console.error('Erro ao registrar material:', error);
     alert('Erro ao registrar o material. Tente novamente.');
@@ -715,4 +769,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('tabela-horarios')) {
     carregarHorarios();
   }
+  if (document.getElementById('form-material')) {
+    carregarObrasEMateriais();
+  }
+
+
 });
+
+
+

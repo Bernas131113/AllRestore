@@ -27,11 +27,20 @@
                 </div>
                 <div  class="flex-center4">
                     <label for="obra" class="input-label">Obra:</label>
-                    <input type="text" id="obra" placeholder="Indique a obra" required>
+                    <select id="obra" class="obra-select2">
+                        <option value="" selected>Selecione a obra</option>
+                    </select>
                 </div>
                 <div  class="flex-center6">
                     <label for="material" class="input-label">Material:</label>
-                    <input type="text" id="material" placeholder="Material em falta" required>
+                    <select id="material" class="obra-select3">
+                        <option value="" selected>Selecione o material</option>
+                    </select>
+                </div>
+                
+                <div class="flex-center8">
+                    <label for="quantidade" class="input-label">Quantidade:</label>
+                    <input type="number" id="quantidade" class="obra-input2" min="1" placeholder="Digite a quantidade" required />
                 </div>
                 <div class="flex-center">
                     <button type="submit" class="btn btn-green btn-full">Encomendar</button>
@@ -39,7 +48,7 @@
                 </div>
             </form>
         </div>
-
+        
         <script src="script.js"></script>
 </body>
 
