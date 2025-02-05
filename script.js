@@ -346,32 +346,29 @@ async function carregarObrasEMateriais() {
 function salvarLocalizacao() {
   return new Promise((resolve) => {
     if (navigator.geolocation) {
-      // Configura a geolocalização com opções para maior precisão
       const options = {
-        enableHighAccuracy: true,  // Ativa a maior precisão possível
-        timeout: 5000,             // Tempo limite para tentar obter a localização (5 segundos)
-        maximumAge: 0             // Não utiliza dados antigos
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
       };
 
       navigator.geolocation.getCurrentPosition(function (position) {
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
-        const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
+        const openCageApiKey = "e9e7d8b4f7b446dd831d49fcee2ead04"; // Substituir pela tua chave
+        const openCageUrl = `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${openCageApiKey}&language=pt`;
 
-        fetch(nominatimUrl)
+        fetch(openCageUrl)
           .then(response => response.json())
           .then(data => {
-            if (data && data.display_name) {
-              let enderecoCompleto = data.display_name;
+            if (data.results.length > 0) {
+              let enderecoCompleto = data.results[0].formatted;
               console.log('Endereço Completo:', enderecoCompleto);
 
-              // Extrair até a terceira vírgula (ajuste conforme necessário)
               let endereco = enderecoCompleto.split(',').slice(0, 3).join(',');
               console.log('Endereço Extraído:', endereco);
 
-              // Se a função for chamada para atualizar a localização via "mudar obra",
-              // ela também fará a atualização no registro.
-              // Obter o nome do usuário, data atual e buscar o registro:
+              // Agora, atualiza no Sheety
               const nome = document.getElementById('nome').value;
               const dataAtual = new Date();
               const dataFormatada = dataAtual.toLocaleDateString('pt-PT');
@@ -384,14 +381,13 @@ function salvarLocalizacao() {
                   const registoExistente = data.horarios.find(item => item.nome === nome && item.data === dataFormatada);
 
                   if (registoExistente) {
-                    // Concatena a nova localização com a já existente (se houver)
                     let novoHistorico = registoExistente.localizacao
                       ? registoExistente.localizacao + " || " + endereco
                       : endereco;
 
                     registoExistente.localizacao = novoHistorico;
 
-                    // Enviar a atualização via PUT
+                    // Enviar atualização via PUT para Sheety
                     fetch(`https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/horarios/${registoExistente.id}`, {
                       method: 'PUT',
                       headers: {
@@ -401,33 +397,35 @@ function salvarLocalizacao() {
                     })
                       .then(response => response.json())
                       .then(data => {
-                        console.log('Histórico de localização atualizado com sucesso:', novoHistorico);
+                        console.log('Histórico de localização atualizado no Sheety:', novoHistorico);
                       })
-                      .catch(error => console.error('Erro ao atualizar localização:', error));
+                      .catch(error => console.error('Erro ao atualizar localização no Sheety:', error));
                   }
                 })
-                .catch(error => console.error('Erro ao buscar registro para localização:', error));
+                .catch(error => console.error('Erro ao buscar registro no Sheety:', error));
 
-              // Retorna o endereço capturado para que ele possa ser utilizado logo após o POST na função picarPonto
               resolve(endereco);
             } else {
               resolve(null);
             }
           })
           .catch(error => {
-            console.error('Erro na requisição do endereço:', error);
+            console.error('Erro na API OpenCage:', error);
             resolve(null);
           });
+
       }, error => {
         console.error('Erro na geolocalização:', error);
         resolve(null);
-      }, options);  // Passa as opções para melhorar a precisão
+      }, options);
+
     } else {
-      console.error('Geolocalização não é suportada pelo navegador.');
+      console.error('Geolocalização não suportada pelo navegador.');
       resolve(null);
     }
   });
 }
+
 
 
 
