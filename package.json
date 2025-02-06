@@ -3,6 +3,7 @@
     "tailwindcss": "^3.4.17"
   },
   "dependencies": {
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "firebase": "^11.2.0"
   }
 }
