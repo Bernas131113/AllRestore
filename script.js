@@ -1,4 +1,4 @@
-require('dotenv').config();
+
 const PIN = process.env.PIN;
 const UTILIZADOR_1 = process.env.UTILIZADOR_1;
 const PASSWORD_1 = process.env.PASSWORD_1;
