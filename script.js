@@ -1,7 +1,24 @@
+require('dotenv').config();
+const PIN = process.env.PIN;
+const UTILIZADOR_1 = process.env.UTILIZADOR_1;
+const PASSWORD_1 = process.env.PASSWORD_1;
+const UTILIZADOR_2 = process.env.UTILIZADOR_2;
+const PASSWORD_2 = process.env.PASSWORD_2;
+const UTILIZADOR_3 = process.env.UTILIZADOR_3;
+const PASSWORD_3 = process.env.PASSWORD_3;
+const UTILIZADOR_4 = process.env.UTILIZADOR_4;
+const PASSWORD_4 = process.env.PASSWORD_4;
+const UTILIZADOR_5 = process.env.UTILIZADOR_5;
+const PASSWORD_5 = process.env.PASSWORD_5;
 
+const API_URLOBRAS = process.env.API_URLOBRAS;
+const API_URLHORARIOS = process.env.API_URLHORARIOS;
+const API_URLLOGIN = process.env.API_URLLOGIN;
+const API_URLENCOMENDAS = process.env.API_URLENCOMENDAS;
+const APIKEYOPENCAGE = process.env.APIKEYOPENCAGE;
 let isAdmin = false;
 document.addEventListener("DOMContentLoaded", function () {
-  let pinCorreto = "8888";
+  let pinCorreto = process.env.PIN;
 
 
   if (window.location.pathname === "/" || window.location.pathname.endsWith("index.html")) {
@@ -56,9 +73,9 @@ async function verificarCredenciais() {
   const Password = document.getElementById('Password').value;
 
   const credenciaisValidas = [
-    { utilizador: 'Marta Pequeno', Password: 'misap13' },
-    { utilizador: 'Sergio Pequeno', Password: 'allrestore' },
-    { utilizador: 'Bernardo Alves', Password: '1311' },
+    { utilizador: UTILIZADOR_1, Password: PASSWORD_1 },
+    { utilizador: UTILIZADOR_2, Password: PASSWORD_2 },
+    { utilizador: UTILIZADOR_3, Password: PASSWORD_3 },
   ];
 
   const utilizadorValido = credenciaisValidas.find(user => user.utilizador === utilizador && user.Password === Password);
