@@ -1,3 +1,4 @@
+
 let isAdmin = false;
 document.addEventListener("DOMContentLoaded", function () {
   let pinCorreto = "8888";
@@ -69,7 +70,6 @@ async function verificarCredenciais() {
     alert('Credenciais incorretas');
   }
 }
-
 
 async function verificarCredenciaisEscritorio() {
   const escritorioutilizador = document.getElementById('escritorioutilizador').value;
@@ -276,7 +276,6 @@ async function picarPonto(tipo) {
   }
 }
 
-
 async function carregarNomes() {
   const selectNomes = document.getElementById('nome');
   if (!selectNomes) return; // Sai se o elemento não existir
@@ -337,11 +336,6 @@ async function carregarObrasEMateriais() {
     console.error('Erro ao carregar obras e materiais:', error);
   }
 }
-
-
-
-
-
 
 function salvarLocalizacao() {
   return new Promise((resolve) => {
@@ -426,10 +420,6 @@ function salvarLocalizacao() {
   });
 }
 
-
-
-
-
 function formatarDuracao(horaEntrada, horaSaida, horaEntradaAlmoco, horaSaidaAlmoco) {
   if (!horaEntrada || !horaSaida) {
     console.log("Erro: Falta horário de entrada ou saída");
@@ -475,13 +465,12 @@ function formatarDuracao(horaEntrada, horaSaida, horaEntradaAlmoco, horaSaidaAlm
   return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
 }
 
-
-
 function aplicarFiltros() {
   const nomeFiltro = document.getElementById('filtro-nome').value.trim().toLowerCase(); // Filtro de nome
   const dataFiltro = document.getElementById('filtro-data').value.trim(); // Filtro de data
   carregarHorarios(nomeFiltro, dataFiltro);
 }
+
 function formatarDataParaYYYYMMDD(data) {
   // Se a data já estiver no formato correto, retorna diretamente
   if (data.includes('-')) return data;
@@ -491,7 +480,6 @@ function formatarDataParaYYYYMMDD(data) {
 }
 
 let editando = false;
-
 
 async function carregarHorarios(nomeFiltro = '', dataFiltro = '') {
   try {
@@ -534,6 +522,8 @@ async function carregarHorarios(nomeFiltro = '', dataFiltro = '') {
           : 'N/A'}
                 </td>
                 <td contenteditable="false">${registo.localizacao || 'Não picado'}</td>
+                
+                
             `;
       tabelaHorarios.appendChild(tr);
     });
@@ -544,7 +534,6 @@ async function carregarHorarios(nomeFiltro = '', dataFiltro = '') {
   }
 }
 
-// Habilita edição na tabela
 function habilitarEdicao() {
   editando = true;
   document.getElementById("editar-btn").style.display = "none";
@@ -556,7 +545,6 @@ function habilitarEdicao() {
   });
 }
 
-// Salvar edições no Sheety
 async function salvarEdicoes() {
   editando = false;
   document.getElementById("editar-btn").style.display = "inline-block";
@@ -617,12 +605,76 @@ async function salvarEdicoes() {
   alert("Edições feitas!");
   carregarHorarios();
 }
+let modoExclusaoAtivo = false; // Variável para controlar o modo de exclusão
 
+function ativarModoExclusao() {
+  modoExclusaoAtivo = !modoExclusaoAtivo;
 
+  const botaoExcluir = document.getElementById("btn-excluir");
+  botaoExcluir.innerText = modoExclusaoAtivo ? "Concluído" : "Excluir"; // Altera o texto do botão
 
+  document.querySelectorAll("#tabela-horarios tbody tr").forEach(linha => {
+    if (modoExclusaoAtivo) {
+      botaoExcluir.innerText = "Concluído";
+      botaoExcluir.style.backgroundColor = "green"; // Fundo verde
+      botaoExcluir.style.color = "white"; // Texto branco
+      if (!linha.querySelector(".btn-excluir")) {
+        const botaoExcluirLinha = document.createElement("td");
+        botaoExcluirLinha.classList.add("btn-excluir");
+        botaoExcluirLinha.innerHTML = "❌";
+        botaoExcluirLinha.style.cursor = "pointer";
+        botaoExcluirLinha.style.color = "red";
+        botaoExcluirLinha.style.fontSize = "20px";
+        botaoExcluirLinha.onclick = () => excluirLinha(linha);
+        linha.appendChild(botaoExcluirLinha);
+      }
+    } else {
+      // Remove os botões de exclusão ao desativar o modo
+      const botaoExcluirLinha = linha.querySelector(".btn-excluir");
+      if (botaoExcluirLinha) botaoExcluirLinha.remove();
+    }
+  });
+}
 
+async function excluirLinha(linhaElement) {
+  const id = linhaElement.dataset.id;
 
+  if (!confirm("Tem certeza que deseja excluir esta linha?")) {
+    return;
+  }
 
+  try {
+    // Requisição DELETE para a API
+    const response = await fetch(`https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/horarios/${id}`, {
+      method: "DELETE"
+    });
+
+    if (!response.ok) {
+      alert(`Erro ao excluir o registro com ID ${id}`);
+      return;
+    }
+
+    // Remove a linha do DOM
+    linhaElement.remove();
+
+    // Reorganiza a tabela para evitar espaços vazios
+    reorganizarTabela();
+
+    alert("Registro excluído com sucesso!");
+  } catch (error) {
+    console.error(`Erro ao excluir registro com ID ${id}:`, error);
+  }
+}
+
+function reorganizarTabela() {
+  const tbody = document.querySelector("#tabela-horarios tbody");
+  const linhas = Array.from(tbody.querySelectorAll("tr"));
+
+  tbody.innerHTML = ""; // Limpa a tabela
+
+  // Reinsere as linhas existentes para garantir que não haja espaços vazios
+  linhas.forEach(linha => tbody.appendChild(linha));
+}
 
 
 async function carregarEncomendas() {
@@ -638,6 +690,8 @@ async function carregarEncomendas() {
 
     data.encomendas.forEach(registo => {
       const tr = document.createElement('tr');
+      tr.setAttribute("data-id", registo.id);
+
       tr.innerHTML = `
                 <td>${registo.nome || 'Sem nome'}</td>
                 <td>${registo.data || 'Sem data'}</td>
@@ -656,8 +710,6 @@ async function carregarEncomendas() {
   }
 }
 
-
-// Função para marcar uma encomenda como tratada ou não tratada
 async function marcarComoTratada(id, botao) {
   let estaTratada;
 
@@ -689,6 +741,62 @@ async function marcarComoTratada(id, botao) {
     if (estaTratada !== undefined) {
       botao.textContent = estaTratada ? '✅' : '❌';
     }
+  }
+}
+
+function ativarModoExclusaoEscritorio() {
+  modoExclusaoAtivo = !modoExclusaoAtivo;
+
+  const botaoExcluir = document.getElementById("btn-excluir");
+  botaoExcluir.innerText = modoExclusaoAtivo ? "Concluído" : "Excluir"; // Altera o texto do botão
+
+  document.querySelectorAll("#tabela-encomendas tbody tr").forEach(linha => {
+    if (modoExclusaoAtivo) {
+      botaoExcluir.innerText = "Concluído";
+      botaoExcluir.style.backgroundColor = "green"; // Fundo verde
+      botaoExcluir.style.color = "white"; // Texto branco
+      if (!linha.querySelector(".btn-excluir")) {
+        const botaoExcluirLinha = document.createElement("td");
+        botaoExcluirLinha.classList.add("btn-excluir");
+        botaoExcluirLinha.innerHTML = "❌";
+        botaoExcluirLinha.style.cursor = "pointer";
+        botaoExcluirLinha.style.color = "red";
+        botaoExcluirLinha.style.fontSize = "20px";
+        botaoExcluirLinha.onclick = () => excluirLinhaEscritorio(linha);
+        linha.appendChild(botaoExcluirLinha);
+      }
+    } else {
+      // Remove os botões de exclusão ao desativar o modo
+      const botaoExcluirLinha = linha.querySelector(".btn-excluir");
+      if (botaoExcluirLinha) botaoExcluirLinha.remove();
+    }
+  });
+}
+
+async function excluirLinhaEscritorio(linhaElement) {
+  const id = linhaElement.dataset.id;
+
+  if (!confirm("Tem certeza que deseja excluir esta encomenda?")) {
+    return;
+  }
+
+  try {
+    // Requisição DELETE para a API
+    const response = await fetch(`https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/encomendas/${id}`, {
+      method: "DELETE"
+    });
+
+    if (!response.ok) {
+      alert(`Erro ao excluir o registro com ID ${id}`);
+      return;
+    }
+
+    // Remove a linha do DOM
+    linhaElement.remove();
+
+    alert("Encomenda excluída com sucesso!");
+  } catch (error) {
+    console.error(`Erro ao excluir encomenda com ID ${id}:`, error);
   }
 }
 
@@ -739,11 +847,73 @@ async function registrarMaterial(event) {
   }
 }
 
-
 function downloadExcel() {
-  const tabela = document.getElementById('tabela-horarios');
-  const wb = XLSX.utils.table_to_book(tabela, { sheet: "Horários" });
-  XLSX.writeFile(wb, "Horas.xlsx");
+  try {
+    const tabela = document.getElementById('tabela-horarios');
+    if (!tabela) return;
+
+    const wb = XLSX.utils.table_to_book(tabela, { sheet: "Horários" });
+    const ws = wb.Sheets["Horários"];
+    if (!ws['!ref']) return;
+
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    const tbody = tabela.getElementsByTagName('tbody')[0];
+    if (!tbody) return;
+
+    // Itera sobre as linhas do worksheet (pulando o cabeçalho)
+    for (let row = range.s.r + 1; row <= range.e.r; row++) {
+      const htmlRow = tbody.rows[row - 1];
+      if (!htmlRow) continue;
+
+      // Considera que a data está na segunda coluna (índice 1)
+      const dateCellText = htmlRow.cells[1].textContent.trim();
+      const partes = dateCellText.split('/');
+      if (partes.length === 3) {
+        const dia = parseInt(partes[0], 10);
+        const mes = parseInt(partes[1], 10);
+        const ano = parseInt(partes[2], 10);
+
+        const excelSerial = (Date.UTC(ano, mes - 1, dia) - Date.UTC(1899, 11, 30)) / (24 * 60 * 60 * 1000);
+        const cellAddress = { c: 1, r: row };
+        const cellRef = XLSX.utils.encode_cell(cellAddress);
+        ws[cellRef].v = excelSerial;
+        ws[cellRef].t = 'n';
+        ws[cellRef].z = 'dd/mm/yyyy';
+      }
+    }
+
+    XLSX.writeFile(wb, "Horas.xlsx");
+  } catch (error) {
+    // Se necessário, trate erros aqui
+  }
+}
+
+function adicionarOlhoParaSenha(passwordFieldId, iconElementId, linkElementId) {
+  const passwordField = document.getElementById(passwordFieldId);
+  const togglePasswordIcon = document.getElementById(iconElementId);
+  const togglePasswordLink = document.getElementById(linkElementId);
+
+  // Verifica se os elementos existem antes de adicionar o evento
+  if (passwordField && togglePasswordIcon && togglePasswordLink) {
+    togglePasswordLink.addEventListener('click', function (event) {
+      event.preventDefault(); // Impede a navegação do link
+
+      // Alterna o tipo do campo de senha entre 'password' e 'text'
+      const type = passwordField.type === 'password' ? 'text' : 'password';
+      passwordField.type = type;
+
+      // Altera o ícone dependendo do tipo de campo
+      if (passwordField.type === 'password') {
+        togglePasswordIcon.src = "hide.png"; // Ícone de senha oculta
+        togglePasswordLink.title = "password icon"; // Atualiza o título
+      } else {
+        togglePasswordIcon.src = "show.png"; // Ícone de senha visível
+        togglePasswordLink.title = "eye icon"; // Atualiza o título
+      }
+    });
+  } else {
+    console.warn("Elementos não encontrados para os IDs fornecidos.");
+  }
 }
 
 
@@ -752,7 +922,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('nome')) {
     carregarNomes();
   }
-
+  
   // Carrega encomendas na área de escritório
   if (document.getElementById('tabela-encomendas')) {
     carregarEncomendas();
@@ -770,7 +940,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('form-material')) {
     carregarObrasEMateriais();
   }
+  if (document.getElementById('Password') && document.getElementById('togglePasswordLink1') && document.getElementById('togglePasswordIcon1')) {
+    adicionarOlhoParaSenha('Password', 'togglePasswordIcon1', 'togglePasswordLink1');
+  }
 
+  if (document.getElementById('escritorioPassword') && document.getElementById('togglePasswordLink2') && document.getElementById('togglePasswordIcon2')) {
+    adicionarOlhoParaSenha('escritorioPassword', 'togglePasswordIcon2', 'togglePasswordLink2');
+  }
 
 });
 

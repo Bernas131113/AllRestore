@@ -17,8 +17,8 @@
         </div>
         <div id="escritorio-area">
             <h1 class="h1-subclass">Controlo de Encomendas</h1>
-            <button  onclick="window.location.href='index.html'" class="btn btn-red btn-full">Sair</button>
-
+            <button onclick="window.location.href='index.html'" class="btn btn-red btn-full">Sair</button>
+            <button id="btn-excluir" class="btn btn-red btn-full" onclick="ativarModoExclusaoEscritorio()">Excluir</button>
             <div id="tabela-encomendas-wrapper">
                 <table id="tabela-encomendas">
                     <thead>
@@ -28,6 +28,7 @@
                             <th>Obra</th>
                             <th>Descrição</th>
                             <th>Estado</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -36,7 +37,7 @@
             </div>
         </div>
 
-        
+
         <script src="script.js"></script>
 </body>
 
