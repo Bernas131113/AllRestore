@@ -65,19 +65,29 @@ document.addEventListener("DOMContentLoaded", async function () {
     return;
   }
 
-
   const PIN = String(credenciais.PIN).trim();
 
   if (window.location.pathname === "/" || window.location.pathname.endsWith("index.html")) {
     if (!localStorage.getItem("acessoLiberado")) {
       function pedirPIN() {
-        let pinDigitado = prompt("Introduza o PIN:").trim();
+        let pinDigitado = prompt("Introduza o PIN:"); // Removido o trim() inicial
+
+        // Tratamento para quando o usuário clica em Cancelar
+        if (pinDigitado === null) {
+          alert("É necessário inserir o PIN para acessar!");
+          pedirPIN(); // Força nova tentativa
+          return;
+        }
+
+        pinDigitado = pinDigitado.trim(); // Agora seguro para usar trim()
 
         if (pinDigitado === PIN) {
           localStorage.setItem("acessoLiberado", "true");
+          // Recarrega para aplicar o acesso
+          window.location.reload();
         } else {
           alert("PIN incorreto! Tente novamente.");
-          pedirPIN();
+          pedirPIN(); // Nova tentativa após erro
         }
       }
 
@@ -85,7 +95,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 });
-
 
 function carregarPagina(pagina) {
   window.location.href = pagina;
