@@ -1,19 +1,80 @@
 
 let isAdmin = false;
-document.addEventListener("DOMContentLoaded", function () {
-  let pinCorreto = "8888";
+// Função para obter os dados da API Sheety e armazenar em constantes
+async function obterCredenciais() {
+  try {
+    const response = await fetch('https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/credenciais');
 
+    if (!response.ok) {
+      throw new Error('Erro ao buscar as credenciais');
+    }
+
+    const data = await response.json();
+
+    // Verificar se os dados possuem a chave 'credenciais'
+    if (data && data.credenciais) {
+      const credenciais = data.credenciais;
+
+      // Armazenar os valores das credenciais em constantes
+      const PIN = credenciais.find(record => record.chave === 'PIN')?.valor || '';
+      const UTILIZADOR_1 = credenciais.find(record => record.chave === 'UTILIZADOR_1')?.valor || '';
+      const PASSWORD_1 = credenciais.find(record => record.chave === 'PASSWORD_1')?.valor || '';
+      const UTILIZADOR_2 = credenciais.find(record => record.chave === 'UTILIZADOR_2')?.valor || '';
+      const PASSWORD_2 = credenciais.find(record => record.chave === 'PASSWORD_2')?.valor || '';
+      const UTILIZADOR_3 = credenciais.find(record => record.chave === 'UTILIZADOR_3')?.valor || '';
+      const PASSWORD_3 = credenciais.find(record => record.chave === 'PASSWORD_3')?.valor || '';
+      const UTILIZADOR_4 = credenciais.find(record => record.chave === 'UTILIZADOR_4')?.valor || '';
+      const PASSWORD_4 = credenciais.find(record => record.chave === 'PASSWORD_4')?.valor || '';
+      const UTILIZADOR_5 = credenciais.find(record => record.chave === 'UTILIZADOR_5')?.valor || '';
+      const PASSWORD_5 = credenciais.find(record => record.chave === 'PASSWORD_5')?.valor || '';
+      const API_BASE = credenciais.find(record => record.chave === 'API_BASE')?.valor || '';
+      const APIKEYOPENCAGE = credenciais.find(record => record.chave === 'APIKEYOPENCAGE')?.valor || '';
+
+      // Retorna as credenciais ou armazene-as onde for necessário
+      return {
+        PIN,
+        UTILIZADOR_1,
+        PASSWORD_1,
+        UTILIZADOR_2,
+        PASSWORD_2,
+        UTILIZADOR_3,
+        PASSWORD_3,
+        UTILIZADOR_4,
+        PASSWORD_4,
+        UTILIZADOR_5,
+        PASSWORD_5,
+        API_BASE,
+        APIKEYOPENCAGE,
+
+      };
+    } else {
+      throw new Error('Estrutura de dados inesperada');
+    }
+  } catch (error) {
+    console.error('Erro ao obter credenciais:', error);
+    return null;
+  }
+}
+
+
+document.addEventListener("DOMContentLoaded", async function () {
+  const credenciais = await obterCredenciais();
+
+  if (!credenciais) {
+    alert('Não foi possível carregar as credenciais');
+    return;
+  }
+
+
+  const PIN = String(credenciais.PIN).trim();
 
   if (window.location.pathname === "/" || window.location.pathname.endsWith("index.html")) {
-
-
     if (!localStorage.getItem("acessoLiberado")) {
       function pedirPIN() {
-        let pinDigitado = prompt("Introduza o PIN:");
+        let pinDigitado = prompt("Introduza o PIN:").trim();
 
-        if (pinDigitado === pinCorreto) {
+        if (pinDigitado === PIN) {
           localStorage.setItem("acessoLiberado", "true");
-
         } else {
           alert("PIN incorreto! Tente novamente.");
           pedirPIN();
@@ -55,10 +116,25 @@ async function verificarCredenciais() {
   const utilizador = document.getElementById('utilizador').value;
   const Password = document.getElementById('Password').value;
 
+  // Obter as credenciais antes de utilizá-las
+  const credenciais = await obterCredenciais();
+
+
+  if (!credenciais) {
+    alert('Erro ao carregar credenciais');
+    return;
+  }
+  const UTILIZADOR_1 = String(credenciais.UTILIZADOR_1 || '').trim();
+  const PASSWORD_1 = String(credenciais.PASSWORD_1 || '').trim();
+  const UTILIZADOR_2 = String(credenciais.UTILIZADOR_2 || '').trim();
+  const PASSWORD_2 = String(credenciais.PASSWORD_2 || '').trim();
+  const UTILIZADOR_3 = String(credenciais.UTILIZADOR_3 || '').trim();
+  const PASSWORD_3 = String(credenciais.PASSWORD_3 || '').trim();
+
   const credenciaisValidas = [
-    { utilizador: 'Marta Pequeno', Password: 'misap13' },
-    { utilizador: 'Sergio Pequeno', Password: 'allrestore' },
-    { utilizador: 'Bernardo Alves', Password: '1311' },
+    { utilizador: UTILIZADOR_1, Password: PASSWORD_1 },
+    { utilizador: UTILIZADOR_2, Password: PASSWORD_2 },
+    { utilizador: UTILIZADOR_3, Password: PASSWORD_3 },
   ];
 
   const utilizadorValido = credenciaisValidas.find(user => user.utilizador === utilizador && user.Password === Password);
@@ -71,16 +147,34 @@ async function verificarCredenciais() {
   }
 }
 
+
 async function verificarCredenciaisEscritorio() {
   const escritorioutilizador = document.getElementById('escritorioutilizador').value;
   const escritorioPassword = document.getElementById('escritorioPassword').value;
+  const credenciais = await obterCredenciais();
+
+  if (!credenciais) {
+    alert('Erro ao carregar credenciais');
+    return;
+  }
+  const UTILIZADOR_1 = String(credenciais.UTILIZADOR_1 || '').trim();
+  const PASSWORD_1 = String(credenciais.PASSWORD_1 || '').trim();
+  const UTILIZADOR_2 = String(credenciais.UTILIZADOR_2 || '').trim();
+  const PASSWORD_2 = String(credenciais.PASSWORD_2 || '').trim();
+  const UTILIZADOR_3 = String(credenciais.UTILIZADOR_3 || '').trim();
+  const PASSWORD_3 = String(credenciais.PASSWORD_3 || '').trim();
+  const UTILIZADOR_4 = String(credenciais.UTILIZADOR_4 || '').trim();
+  const PASSWORD_4 = String(credenciais.PASSWORD_4 || '').trim();
+  const UTILIZADOR_5 = String(credenciais.UTILIZADOR_5 || '').trim();
+  const PASSWORD_5 = String(credenciais.PASSWORD_5 || '').trim();
+
 
   const credenciaisValidas = [
-    { escritorioutilizador: 'Marta Pequeno', escritorioPassword: 'misap13' },
-    { escritorioutilizador: 'Sergio Pequeno', escritorioPassword: 'allrestore' },
-    { escritorioutilizador: 'Bernardo Alves', escritorioPassword: '1311' },
-    { escritorioutilizador: 'Sandra Bexiga', escritorioPassword: 'sbexiga' },
-    { escritorioutilizador: 'Pedro Leitão', escritorioPassword: '1993' },
+    { escritorioutilizador: UTILIZADOR_1, escritorioPassword: PASSWORD_1 },
+    { escritorioutilizador: UTILIZADOR_2, escritorioPassword: PASSWORD_2 },
+    { escritorioutilizador: UTILIZADOR_3, escritorioPassword: PASSWORD_3 },
+    { escritorioutilizador: UTILIZADOR_4, escritorioPassword: PASSWORD_4 },
+    { escritorioutilizador: UTILIZADOR_5, escritorioPassword: PASSWORD_5 },
   ];
 
   const escritorioutilizadorValido = credenciaisValidas.find(user =>
@@ -99,6 +193,8 @@ async function verificarCredenciaisEscritorio() {
 async function picarPonto(tipo) {
   const nomeElement = document.getElementById('nome');
   const obra = document.getElementById('obra') ? document.getElementById('obra').value : '';
+  const credenciais = await obterCredenciais();
+  const API_BASE = String(credenciais.API_BASE).trim();
 
   if (!nomeElement) {
     console.error('Elemento de nome não encontrado!');
@@ -115,7 +211,7 @@ async function picarPonto(tipo) {
 
   try {
     // Validação de login
-    const responseLogin = await fetch('https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/login');
+    const responseLogin = await fetch(`${API_BASE}/login`);
     const dataLogin = await responseLogin.json();
     const nomeValido = dataLogin.login.some(user => user.nome === nome);
 
@@ -125,7 +221,7 @@ async function picarPonto(tipo) {
     }
 
     // Obter dados de horários
-    const response = await fetch('https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/horarios');
+    const response = await fetch(`${API_BASE}/horarios`);
     const data = await response.json();
     const dataAtual = new Date();
     const dataFormatada = dataAtual.toLocaleDateString('pt-PT');
@@ -155,7 +251,7 @@ async function picarPonto(tipo) {
         localizacao: null // Inicialmente null
       };
 
-      const registoResponse = await fetch('https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/horarios', {
+      const registoResponse = await fetch(`${API_BASE}/horarios`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -173,7 +269,7 @@ async function picarPonto(tipo) {
         // Se o endereço foi retornado e o registro possui um ID, atualiza o campo localizacao
         if (endereco && registroCriado.horario && registroCriado.horario.id) {
           registroCriado.horario.localizacao = endereco;
-          await fetch(`https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/horarios/${registroCriado.horario.id}`, {
+          await fetch(`${API_BASE}/horarios/${registroCriado.horario.id}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json'
@@ -200,7 +296,7 @@ async function picarPonto(tipo) {
       // Atualizar a hora de entrada para almoço
       registoExistente.entradaAlmoco = horaFormatada;
 
-      const registoResponse = await fetch(`https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/horarios/${registoExistente.id}`, {
+      const registoResponse = await fetch(`${API_BASE}/horarios/${registoExistente.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -226,7 +322,7 @@ async function picarPonto(tipo) {
       // Atualizar a hora de saída para almoço
       registoExistente.saidaAlmoco = horaFormatada;
 
-      const registoResponse = await fetch(`https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/horarios/${registoExistente.id}`, {
+      const registoResponse = await fetch(`${API_BASE}/horarios/${registoExistente.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -252,7 +348,7 @@ async function picarPonto(tipo) {
       // Atualizar a hora de saída do trabalho
       registoExistente.horaSaida = horaFormatada;
 
-      const registoResponse = await fetch(`https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/horarios/${registoExistente.id}`, {
+      const registoResponse = await fetch(`${API_BASE}/horarios/${registoExistente.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -278,10 +374,12 @@ async function picarPonto(tipo) {
 
 async function carregarNomes() {
   const selectNomes = document.getElementById('nome');
+  const credenciais = await obterCredenciais();
+  const API_BASE = String(credenciais.API_BASE).trim();
   if (!selectNomes) return; // Sai se o elemento não existir
 
   try {
-    const response = await fetch('https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/login');
+    const response = await fetch(`${API_BASE}/login`);
     const data = await response.json();
 
     selectNomes.innerHTML = '<option value="" selected>Selecione o seu nome</option>';
@@ -299,12 +397,14 @@ async function carregarNomes() {
 async function carregarObrasEMateriais() {
   const selectObras = document.getElementById('obra');
   const selectMaterial = document.getElementById('material');
+  const credenciais = await obterCredenciais();
+  const API_BASE = String(credenciais.API_BASE).trim();
 
   if (!selectObras || !selectMaterial) return; // Sai se algum dos elementos não existir
 
   try {
     // Requisição única para obter os dados de obras
-    const response = await fetch('https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/obras');
+    const response = await fetch(`${API_BASE}/obras`);
     const data = await response.json();
 
     // Verifique se a chave "obras" existe na resposta
@@ -337,7 +437,10 @@ async function carregarObrasEMateriais() {
   }
 }
 
-function salvarLocalizacao() {
+async function salvarLocalizacao() {
+  const credenciais = await obterCredenciais();
+  const APIKEYOPENCAGE = String(credenciais.APIKEYOPENCAGE).trim();
+  const API_BASE = String(credenciais.API_BASE).trim();
   return new Promise((resolve) => {
     if (navigator.geolocation) {
       const options = {
@@ -349,7 +452,7 @@ function salvarLocalizacao() {
       navigator.geolocation.getCurrentPosition(function (position) {
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
-        const openCageApiKey = "e9e7d8b4f7b446dd831d49fcee2ead04"; // Substituir pela tua chave
+        const openCageApiKey = APIKEYOPENCAGE; 
         const openCageUrl = `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${openCageApiKey}&language=pt`;
 
         fetch(openCageUrl)
@@ -367,7 +470,7 @@ function salvarLocalizacao() {
               const dataAtual = new Date();
               const dataFormatada = dataAtual.toLocaleDateString('pt-PT');
 
-              const urlHorarios = "https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/horarios";
+              const urlHorarios = `${API_BASE}/horarios`;
 
               fetch(urlHorarios)
                 .then(response => response.json())
@@ -382,7 +485,7 @@ function salvarLocalizacao() {
                     registoExistente.localizacao = novoHistorico;
 
                     // Enviar atualização via PUT para Sheety
-                    fetch(`https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/horarios/${registoExistente.id}`, {
+                    fetch(`${API_BASE}/horarios/${registoExistente.id}`, {
                       method: 'PUT',
                       headers: {
                         'Content-Type': 'application/json'
@@ -482,8 +585,10 @@ function formatarDataParaYYYYMMDD(data) {
 let editando = false;
 
 async function carregarHorarios(nomeFiltro = '', dataFiltro = '') {
+  const credenciais = await obterCredenciais();
+  const API_BASE = String(credenciais.API_BASE).trim();
   try {
-    const response = await fetch('https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/horarios');
+    const response = await fetch(`${API_BASE}/horarios`);
     const data = await response.json();
     console.log('Resposta da API:', data);
 
@@ -549,6 +654,8 @@ async function salvarEdicoes() {
   editando = false;
   document.getElementById("editar-btn").style.display = "inline-block";
   document.getElementById("concluir-btn").style.display = "none";
+  const credenciais = await obterCredenciais();
+  const API_BASE = String(credenciais.API_BASE).trim();
 
   document.querySelectorAll("#tabela-horarios tbody tr td").forEach(td => {
     td.contentEditable = "false";
@@ -584,10 +691,10 @@ async function salvarEdicoes() {
       dadosAtualizados.localizacao = linha.cells[7].innerText;
     }
 
-    // Se algum dado foi modificado, faça a requisição PUT
+    
     if (Object.keys(dadosAtualizados).length > 0) {
       try {
-        const response = await fetch(`https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/horarios/${id}`, {
+        const response = await fetch( `${API_BASE}/horarios/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ horario: dadosAtualizados })
@@ -605,7 +712,7 @@ async function salvarEdicoes() {
   alert("Edições feitas!");
   carregarHorarios();
 }
-let modoExclusaoAtivo = false; // Variável para controlar o modo de exclusão
+let modoExclusaoAtivo = false;
 
 function ativarModoExclusao() {
   modoExclusaoAtivo = !modoExclusaoAtivo;
@@ -638,6 +745,8 @@ function ativarModoExclusao() {
 
 async function excluirLinha(linhaElement) {
   const id = linhaElement.dataset.id;
+  const credenciais = await obterCredenciais();
+  const API_BASE = String(credenciais.API_BASE).trim();
 
   if (!confirm("Tem certeza que deseja excluir esta linha?")) {
     return;
@@ -645,7 +754,7 @@ async function excluirLinha(linhaElement) {
 
   try {
     // Requisição DELETE para a API
-    const response = await fetch(`https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/horarios/${id}`, {
+    const response = await fetch(`${API_BASE}/horarios/${id}`, {
       method: "DELETE"
     });
 
@@ -670,6 +779,7 @@ function reorganizarTabela() {
   const tbody = document.querySelector("#tabela-horarios tbody");
   const linhas = Array.from(tbody.querySelectorAll("tr"));
 
+
   tbody.innerHTML = ""; // Limpa a tabela
 
   // Reinsere as linhas existentes para garantir que não haja espaços vazios
@@ -679,10 +789,12 @@ function reorganizarTabela() {
 
 async function carregarEncomendas() {
   const tabelaEncomendas = document.getElementById('tabela-encomendas');
+  const credenciais = await obterCredenciais();
+  const API_BASE = String(credenciais.API_BASE).trim();
   if (!tabelaEncomendas) return; // Sai se o elemento não existir
 
   try {
-    const response = await fetch('https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/encomendas');
+    const response = await fetch( `${API_BASE}/encomendas`);
     const data = await response.json();
 
     const tbody = tabelaEncomendas.getElementsByTagName('tbody')[0];
@@ -712,6 +824,8 @@ async function carregarEncomendas() {
 
 async function marcarComoTratada(id, botao) {
   let estaTratada;
+  const credenciais = await obterCredenciais();
+  const API_BASE = String(credenciais.API_BASE).trim();
 
   try {
     estaTratada = botao.textContent.includes('✅');
@@ -719,7 +833,7 @@ async function marcarComoTratada(id, botao) {
 
     botao.textContent = novoEstado ? '✅' : '❌';
 
-    const response = await fetch(`https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/encomendas/${id}`, {
+    const response = await fetch( `${API_BASE}/encomendas/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -775,6 +889,8 @@ function ativarModoExclusaoEscritorio() {
 
 async function excluirLinhaEscritorio(linhaElement) {
   const id = linhaElement.dataset.id;
+  const credenciais = await obterCredenciais();
+  const API_BASE = String(credenciais.API_BASE).trim();
 
   if (!confirm("Tem certeza que deseja excluir esta encomenda?")) {
     return;
@@ -782,7 +898,7 @@ async function excluirLinhaEscritorio(linhaElement) {
 
   try {
     // Requisição DELETE para a API
-    const response = await fetch(`https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/encomendas/${id}`, {
+    const response = await fetch( `${API_BASE}/encomendas/${id}`, {
       method: "DELETE"
     });
 
@@ -802,6 +918,8 @@ async function excluirLinhaEscritorio(linhaElement) {
 
 async function registrarMaterial(event) {
   event.preventDefault();
+  const credenciais = await obterCredenciais();
+  const API_BASE = String(credenciais.API_BASE).trim();
 
   // Pegando os valores do formulário
   const nome = document.getElementById('nome').value;
@@ -819,7 +937,7 @@ async function registrarMaterial(event) {
   const materialComQuantidade = `${material} (Quantidade: ${quantidade})`;
 
   try {
-    const response = await fetch('https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/encomendas', {
+    const response = await fetch(`${API_BASE}/encomendas`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -922,7 +1040,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('nome')) {
     carregarNomes();
   }
-  
+
   // Carrega encomendas na área de escritório
   if (document.getElementById('tabela-encomendas')) {
     carregarEncomendas();
