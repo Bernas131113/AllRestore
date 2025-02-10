@@ -302,6 +302,22 @@ select:focus {
     margin-top: 10px;
     text-align: center;
 }
+.obra-input {
+    width: 100%;
+    max-width: 300px; /* Ajuste conforme necessário */
+    padding: 10px 580px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+/* Quando o input está em foco */
+.obra-input:focus {
+    border-color: #1976d2;
+    box-shadow: 0 0 8px rgba(25, 118, 210, 0.3);
+}
 
 /* Animações */
 @keyframes fadeIn {
