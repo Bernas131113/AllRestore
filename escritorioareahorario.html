@@ -17,23 +17,17 @@
         <nav>
             <ul>
                 <li class="active">Registo de Entradas</li>
-                <li onclick="window.location.href='escritorioarea.html'"> Encomendas</li>
+                <li onclick="window.location.href='escritorioareafunc.html'"> Encomendas</li>
             </ul>
         </nav>
         <button class="sair-btn" onclick="window.location.href='index.html'">Sair</button>
     </div>
     
     <main>
-        <h1>Área de Administração</h1>
+        <h1>Área escritorio</h1>
         <div class="content">
             <div class="header">
                 <h2>Registo de Entradas</h2>
-                <div class="action-buttons">
-                    <button onclick="downloadExcel()" class="download-btn">Download Excel</button>
-                    <button id="editar-btn" class="edit-btn" onclick="habilitarEdicao()">Editar</button>
-                    <button id="concluir-btn" class="edit-btn" onclick="salvarEdicoes()"style="display: none;">Concluido</button>
-                    <button  id="btn-excluir"class="delete-btn" onclick="ativarModoExclusao()">Excluir</button>
-                </div>
             </div>
             
             <div class="search-bar">
@@ -42,7 +36,7 @@
                 <button class="filter-btn" onclick="aplicarFiltros()" >Filtrar</button>
             </div>
             <div class="table-container">
-            <table id="tabela-horariosadmin">
+            <table id="tabela-horarios">
                 <thead>
                     <tr>
                         <th>Nome</th>

@@ -56,7 +56,6 @@ async function obterCredenciais() {
   }
 }
 
-
 document.addEventListener("DOMContentLoaded", async function () {
   const credenciais = await obterCredenciais();
 
@@ -151,6 +150,7 @@ async function verificarCredenciais() {
   if (utilizadorValido) {
     isAdmin = true;
     carregarPagina('adminarea.html');
+
   } else {
     alert('Credenciais incorretas');
   }
@@ -158,14 +158,16 @@ async function verificarCredenciais() {
 
 
 async function verificarCredenciaisEscritorio() {
-  const escritorioutilizador = document.getElementById('escritorioutilizador').value;
-  const escritorioPassword = document.getElementById('escritorioPassword').value;
+  const escritorioutilizador = document.getElementById('escritorioutilizador').value.trim();
+  const escritorioPassword = document.getElementById('escritorioPassword').value.trim();
   const credenciais = await obterCredenciais();
 
   if (!credenciais) {
     alert('Erro ao carregar credenciais');
     return;
   }
+
+  // Obtenha e formate os dados (pode ser conforme seu código atual)
   const UTILIZADOR_1 = String(credenciais.UTILIZADOR_1 || '').trim();
   const PASSWORD_1 = String(credenciais.PASSWORD_1 || '').trim();
   const UTILIZADOR_2 = String(credenciais.UTILIZADOR_2 || '').trim();
@@ -177,7 +179,6 @@ async function verificarCredenciaisEscritorio() {
   const UTILIZADOR_5 = String(credenciais.UTILIZADOR_5 || '').trim();
   const PASSWORD_5 = String(credenciais.PASSWORD_5 || '').trim();
 
-
   const credenciaisValidas = [
     { escritorioutilizador: UTILIZADOR_1, escritorioPassword: PASSWORD_1 },
     { escritorioutilizador: UTILIZADOR_2, escritorioPassword: PASSWORD_2 },
@@ -186,18 +187,22 @@ async function verificarCredenciaisEscritorio() {
     { escritorioutilizador: UTILIZADOR_5, escritorioPassword: PASSWORD_5 },
   ];
 
-  const escritorioutilizadorValido = credenciaisValidas.find(user =>
+  const usuarioValido = credenciaisValidas.find(user =>
     user.escritorioutilizador === escritorioutilizador &&
     user.escritorioPassword === escritorioPassword
   );
 
-  if (escritorioutilizadorValido) {
-    isAdmin = true;
-    carregarPagina('escritorioarea.html');
+  if (usuarioValido) {
+    // Armazena o nome do usuário no localStorage
+    localStorage.setItem("loggedUser", escritorioutilizador);
+    // Muda para a página da área do escritório
+    carregarPagina('escritorioareahorario.html');
   } else {
     alert('Credenciais incorretas');
   }
 }
+
+
 
 async function picarPonto(tipo) {
   const nomeElement = document.getElementById('nome');
@@ -240,7 +245,17 @@ async function picarPonto(tipo) {
     // Verificar se já existe um registro para o nome e data
     const registoExistente = data.horarios.find(item => item.nome === nome && item.data === dataFormatada);
 
-    // Ações baseadas no tipo de registro (entrada, almoço, etc.)
+    // Função auxiliar para exibir a mensagem de sucesso
+    function exibirMensagemSucesso() {
+      const mensagemSucesso = document.getElementById('mensagem-sucesso');
+      if (mensagemSucesso) {
+        mensagemSucesso.style.display = 'block';
+        setTimeout(() => {
+          mensagemSucesso.style.display = 'none';
+        }, 3500);
+      }
+    }
+
     if (tipo === 'entrada') {
       if (registoExistente) {
         alert('Já existe um registro de entrada para hoje.');
@@ -260,6 +275,7 @@ async function picarPonto(tipo) {
         localizacao: null // Inicialmente null
       };
 
+      // Realiza o POST do novo registro
       const registoResponse = await fetch(`${API_BASE}/horarios`, {
         method: 'POST',
         headers: {
@@ -269,30 +285,31 @@ async function picarPonto(tipo) {
       });
 
       if (registoResponse.ok) {
-        // Obter o registro criado (supondo que a resposta tenha essa estrutura)
-        const registroCriado = await registoResponse.json();
+        // Exibe imediatamente a mensagem de sucesso
+        exibirMensagemSucesso();
 
-        // Capturar a localização (esta chamada também atualizará o registro se for o caso de "mudar obra")
-        let endereco = await salvarLocalizacao();
-
-        // Se o endereço foi retornado e o registro possui um ID, atualiza o campo localizacao
-        if (endereco && registroCriado.horario && registroCriado.horario.id) {
-          registroCriado.horario.localizacao = endereco;
-          await fetch(`${API_BASE}/horarios/${registroCriado.horario.id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ horario: registroCriado.horario })
-          });
-        }
-
-        // Exibir mensagem de sucesso
-        const mensagemSucesso = document.getElementById('mensagem-sucesso');
-        mensagemSucesso.style.display = 'block';
-        setTimeout(() => {
-          mensagemSucesso.style.display = 'none';
-        }, 3500);
+        // Processa a resposta e atualiza a localização em segundo plano
+        registoResponse.json().then(registroCriado => {
+          salvarLocalizacao()
+            .then(endereco => {
+              if (endereco && registroCriado.horario && registroCriado.horario.id) {
+                // Atualiza o campo localizacao do registro criado
+                fetch(`${API_BASE}/horarios/${registroCriado.horario.id}`, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    horario: {
+                      ...registroCriado.horario,
+                      localizacao: endereco
+                    }
+                  })
+                });
+              }
+            })
+            .catch(error => console.error("Erro ao atualizar localização:", error));
+        });
       } else {
         alert('Erro ao registrar entrada.');
       }
@@ -314,11 +331,7 @@ async function picarPonto(tipo) {
       });
 
       if (registoResponse.ok) {
-        const mensagemSucesso = document.getElementById('mensagem-sucesso');
-        mensagemSucesso.style.display = 'block';
-        setTimeout(() => {
-          mensagemSucesso.style.display = 'none';
-        }, 3500);
+        exibirMensagemSucesso();
       } else {
         alert('Erro ao registrar entrada de almoço.');
       }
@@ -340,11 +353,7 @@ async function picarPonto(tipo) {
       });
 
       if (registoResponse.ok) {
-        const mensagemSucesso = document.getElementById('mensagem-sucesso');
-        mensagemSucesso.style.display = 'block';
-        setTimeout(() => {
-          mensagemSucesso.style.display = 'none';
-        }, 3500);
+        exibirMensagemSucesso();
       } else {
         alert('Erro ao registrar saída de almoço.');
       }
@@ -366,11 +375,7 @@ async function picarPonto(tipo) {
       });
 
       if (registoResponse.ok) {
-        const mensagemSucesso = document.getElementById('mensagem-sucesso');
-        mensagemSucesso.style.display = 'block';
-        setTimeout(() => {
-          mensagemSucesso.style.display = 'none';
-        }, 3500);
+        exibirMensagemSucesso();
       } else {
         alert('Erro ao registrar saída.');
       }
@@ -380,6 +385,7 @@ async function picarPonto(tipo) {
     console.error(error);
   }
 }
+
 
 async function carregarNomes() {
   const selectNomes = document.getElementById('nome');
@@ -461,7 +467,7 @@ async function salvarLocalizacao() {
       navigator.geolocation.getCurrentPosition(function (position) {
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
-        const openCageApiKey = APIKEYOPENCAGE; 
+        const openCageApiKey = APIKEYOPENCAGE;
         const openCageUrl = `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${openCageApiKey}&language=pt`;
 
         fetch(openCageUrl)
@@ -601,7 +607,7 @@ async function carregarHorarios(nomeFiltro = '', dataFiltro = '') {
     const data = await response.json();
     console.log('Resposta da API:', data);
 
-    const tabelaHorarios = document.getElementById('tabela-horarios').getElementsByTagName('tbody')[0];
+    const tabelaHorarios = document.getElementById('tabela-horariosadmin').getElementsByTagName('tbody')[0];
     tabelaHorarios.innerHTML = '';
 
     // Filtra os dados conforme o nome e a data
@@ -648,12 +654,73 @@ async function carregarHorarios(nomeFiltro = '', dataFiltro = '') {
   }
 }
 
+async function CarregarHorariosFunc(nomeUsuario, dataFiltro = '') {
+  const credenciais = await obterCredenciais();
+  const API_BASE = String(credenciais.API_BASE).trim();
+
+  try {
+    const response = await fetch(`${API_BASE}/horarios`);
+    const data = await response.json();
+
+    const tabelaHorarios = document.getElementById('tabela-horarios');
+    if (!tabelaHorarios) return;
+    const tbody = tabelaHorarios.getElementsByTagName('tbody')[0];
+    if (!tbody) return;
+    tbody.innerHTML = ''; // Limpa a tabela
+
+    // Filtra os horários apenas para o usuário logado
+    const horariosFiltrados = data.horarios.filter(registo => {
+      const usuarioMatch = registo.nome && registo.nome.trim().toLowerCase() === nomeUsuario.trim().toLowerCase();
+      const dataMatch = dataFiltro ? formatarDataParaYYYYMMDD(registo.data) === dataFiltro : true;
+      return usuarioMatch && dataMatch;
+    });
+
+    if (horariosFiltrados.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">Nenhum horário encontrado para ${nomeUsuario}</td></tr>`;
+      return;
+    }
+
+    // Ordena os horários por data (mais recente primeiro)
+    horariosFiltrados.sort((a, b) => {
+      const dateA = new Date(formatarDataParaYYYYMMDD(a.data));
+      const dateB = new Date(formatarDataParaYYYYMMDD(b.data));
+      return dateB - dateA;
+    });
+
+    // Exibe os horários na tabela
+    horariosFiltrados.forEach(registo => {
+      const tr = document.createElement('tr');
+      tr.dataset.id = registo.id;
+      tr.innerHTML = `
+        <td contenteditable="false">${registo.nome}</td>
+        <td contenteditable="false">${registo.data}</td>
+        <td contenteditable="false">${registo.horaEntrada || 'Não picado'}</td>
+        <td contenteditable="false">${registo.entradaAlmoco || 'Não picado'}</td>
+        <td contenteditable="false">${registo.saidaAlmoco || 'Não picado'}</td>
+        <td contenteditable="false">${registo.horaSaida || 'Não picado'}</td>
+        <td contenteditable="false">
+          ${registo.horaEntrada && registo.horaSaida
+          ? formatarDuracao(registo.horaEntrada, registo.horaSaida, registo.entradaAlmoco, registo.saidaAlmoco)
+          : 'N/A'}
+        </td>
+        <td contenteditable="false">${registo.localizacao || 'Não picado'}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+  } catch (error) {
+    alert('Erro ao carregar os horários.');
+    console.error(error);
+  }
+}
+
+
 function habilitarEdicao() {
   editando = true;
   document.getElementById("editar-btn").style.display = "none";
   document.getElementById("concluir-btn").style.display = "inline-block";
 
-  document.querySelectorAll("#tabela-horarios tbody tr td").forEach(td => {
+  document.querySelectorAll("#tabela-horariosadmin tbody tr td").forEach(td => {
     td.contentEditable = "true";
     td.style.backgroundColor = "#f8f9fa"; // Destaca as células editáveis
   });
@@ -666,12 +733,12 @@ async function salvarEdicoes() {
   const credenciais = await obterCredenciais();
   const API_BASE = String(credenciais.API_BASE).trim();
 
-  document.querySelectorAll("#tabela-horarios tbody tr td").forEach(td => {
+  document.querySelectorAll("#tabela-horariosadmin tbody tr td").forEach(td => {
     td.contentEditable = "false";
     td.style.backgroundColor = "white"; // Remove destaque das células
   });
 
-  const linhas = document.querySelectorAll("#tabela-horarios tbody tr");
+  const linhas = document.querySelectorAll("#tabela-horariosadmin tbody tr");
 
   for (const linha of linhas) {
     const id = linha.dataset.id;
@@ -700,10 +767,10 @@ async function salvarEdicoes() {
       dadosAtualizados.localizacao = linha.cells[7].innerText;
     }
 
-    
+
     if (Object.keys(dadosAtualizados).length > 0) {
       try {
-        const response = await fetch( `${API_BASE}/horarios/${id}`, {
+        const response = await fetch(`${API_BASE}/horarios/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ horario: dadosAtualizados })
@@ -729,7 +796,7 @@ function ativarModoExclusao() {
   const botaoExcluir = document.getElementById("btn-excluir");
   botaoExcluir.innerText = modoExclusaoAtivo ? "Concluído" : "Excluir"; // Altera o texto do botão
 
-  document.querySelectorAll("#tabela-horarios tbody tr").forEach(linha => {
+  document.querySelectorAll("#tabela-horariosadmin tbody tr").forEach(linha => {
     if (modoExclusaoAtivo) {
       botaoExcluir.innerText = "Concluído";
       botaoExcluir.style.backgroundColor = "green"; // Fundo verde
@@ -785,7 +852,7 @@ async function excluirLinha(linhaElement) {
 }
 
 function reorganizarTabela() {
-  const tbody = document.querySelector("#tabela-horarios tbody");
+  const tbody = document.querySelector("#tabela-horariosadmin tbody");
   const linhas = Array.from(tbody.querySelectorAll("tr"));
 
 
@@ -803,7 +870,7 @@ async function carregarEncomendas() {
   if (!tabelaEncomendas) return; // Sai se o elemento não existir
 
   try {
-    const response = await fetch( `${API_BASE}/encomendas`);
+    const response = await fetch(`${API_BASE}/encomendas`);
     const data = await response.json();
 
     const tbody = tabelaEncomendas.getElementsByTagName('tbody')[0];
@@ -842,7 +909,7 @@ async function marcarComoTratada(id, botao) {
 
     botao.textContent = novoEstado ? '✅' : '❌';
 
-    const response = await fetch( `${API_BASE}/encomendas/${id}`, {
+    const response = await fetch(`${API_BASE}/encomendas/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -907,7 +974,7 @@ async function excluirLinhaEscritorio(linhaElement) {
 
   try {
     // Requisição DELETE para a API
-    const response = await fetch( `${API_BASE}/encomendas/${id}`, {
+    const response = await fetch(`${API_BASE}/encomendas/${id}`, {
       method: "DELETE"
     });
 
@@ -976,7 +1043,7 @@ async function registrarMaterial(event) {
 
 function downloadExcel() {
   try {
-    const tabela = document.getElementById('tabela-horarios');
+    const tabela = document.getElementById('tabela-horariosadmin');
     if (!tabela) return;
 
     const wb = XLSX.utils.table_to_book(tabela, { sheet: "Horários" });
@@ -1044,8 +1111,14 @@ function adicionarOlhoParaSenha(passwordFieldId, iconElementId, linkElementId) {
 }
 
 
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+  sidebar.classList.toggle('open');
+  overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+}
 document.addEventListener('DOMContentLoaded', () => {
-  // Carrega nomes e obras na página de registro
+
   if (document.getElementById('nome')) {
     carregarNomes();
   }
@@ -1061,9 +1134,17 @@ document.addEventListener('DOMContentLoaded', () => {
     formMaterial.addEventListener('submit', registrarMaterial);
   }
 
-  if (document.getElementById('tabela-horarios')) {
+  if (document.getElementById('tabela-horariosadmin')) {
     carregarHorarios();
   }
+  if (document.getElementById('tabela-horarios')) {
+    const loggedUser = localStorage.getItem("loggedUser");
+    if (loggedUser) {
+      CarregarHorariosFunc(loggedUser);
+    }
+  }
+
+
   if (document.getElementById('form-material')) {
     carregarObrasEMateriais();
   }

@@ -2,61 +2,175 @@
 
 * {
     font-family: 'Rubik', sans-serif;
-}
-/* Peso recomendado: 
-   Títulos: 600 
-   Botões: 500 
-   Texto: 400 */
-body {
-    font-family: 'Roboto', Arial, sans-serif;
-    background: linear-gradient(to bottom, #e3f2fd, #bbdefb);
-    color: #333;
     margin: 0;
     padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+    box-sizing: border-box;
 }
 
-.container {
+
+body {
+    font-family: 'Roboto', Arial, sans-serif;
+    background: linear-gradient(to bottom, #a7c7f1, #81a6d1); /* Cor suave de fundo em tons de azul */
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+label {
+    margin-top: 12px;
+}
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Fundo escuro semi-transparente */
+    z-index: 999; /* Abaixo da sidebar, mas acima do conteúdo */
+    display: none; /* Inicialmente escondido */
+    transition: opacity 0.3s ease;
+}
+
+/* Mostrar overlay quando a sidebar está aberta */
+.sidebar.open ~ .overlay {
+    display: block;
+    opacity: 1;
+}
+
+/* Sidebar com uma cor azul escura */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -270px;
+    width: 270px;
+    height: 100vh;
+    background: #212f4f; /* Azul escuro */
+    color: #fff;
+    transition: left 0.4s ease;
+    z-index: 1000;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.open {
+    left: 0; /* Mostrar a sidebar */
+}
+.sidebar.open ~ .toggle-btn {
+    display: none;
+}
+
+.sidebar-header {
+    padding: 25px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #34495e; /* Cor do borde inferior */
+}
+
+.sidebar-header  {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #eef2ff; /* Cor clara para o título */
+}
+
+.sidebar-header .sidebar-toggler {
+    background: #eef2ff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.sidebar-header .sidebar-toggler:hover {
+    background: #b0c4de; /* Azul mais claro no hover */
+}
+
+.sidebar-header .sidebar-toggler span {
+    font-size: 1.5rem;
+    color: #151a2d;
+}
+
+.menu-items {
+    padding: 20px;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    margin: 8px 0;
+    border-radius: 8px;
+    color: #f1f4ff;
+    text-decoration: none;
+    transition: background 0.3s ease, padding-left 0.3s ease;
+    cursor: pointer;
+}
+
+.menu-item:hover {
+    background: #34495e; /* Azul mais escuro no hover */
+    padding-left: 20px;
+}
+
+.menu-item i {
+    margin-right: 12px;
+    font-size: 1.2rem;
+}
+
+/* Botão de Toggle */
+.toggle-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: #151a2d;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    z-index: 1100;
+    transition: background 0.3s ease;
+}
+
+.toggle-btn:hover {
+    background: #34495e; /* Cor de hover mais clara */
+}
+
+.toggle-btn span {
+    font-size: 1.5rem;
+    color: #eef2ff;
+}
+
+/* Conteúdo Principal */
+#registo-ponto-area {
     width: 100%;
     max-width: 1200px;
     background: #ffffff;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2); /* Sombra mais intensa */
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
     border-radius: 12px;
-    overflow: hidden;
     padding: 20px;
+    margin-top: 20px;
     animation: fadeIn 0.8s ease-in-out;
 }
 
-
-
 .logo-container {
+    text-align: center;
     margin-bottom: 20px;
-
 }
 
-\n\n.logo {
+.logo {
     max-width: 150px;
     height: auto;
     border-radius: 8px;
     transition: transform 0.3s;
-
 }
-
 
 h1 {
     font-size: 2.4rem;
-    margin-top: -50px;
     text-align: center;
     color: #000000;
-    text-shadow: 0 2px 1px rgba(0,0,0,0.15),
-                 0 4px 2px rgba(0,0,0,0.1);
-}
-.h1-subclass {
-    font-size: 2rem;
-    color: #424242;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 1px rgba(0, 0, 0, 0.15), 0 4px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Botões */
@@ -69,795 +183,174 @@ h1 {
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 0 rgba(0,0,0,0.1), 0 2px 5px rgba(0,0,0,0.1);
-    position: relative;
-    top: 0;
-    box-sizing: border-box;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1), 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 0 rgba(0,0,0,0.1), 0 4px 10px rgba(0,0,0,0.2);
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .btn:active {
-    top: 2px;
-    box-shadow: 0 2px 0 rgba(0,0,0,0.1), inset 0 2px 2px rgba(0,0,0,0.1);
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.1);
 }
 
 .btn-green {
     background: #4caf50;
     color: white;
-    border-bottom: 3px solid #388E3C;
+    border-bottom: 3px solid #388e3c;
 }
 
 .btn-red {
     background: #f44336;
     color: white;
-    border-bottom: 3px solid #D32F2F;
+    border-bottom: 3px solid #d32f2f;
 }
 
-.btn-yellow {
-    background: #ffeb3b;
-    color: #000000;
-    border-bottom: 3px solid #FBC02D;
-}
-
-.btn-orange {
-    background: #ff9900;
-    color: white;
-    border-bottom: 3px solid #F57C00;
-}
-
-.btn-blue,
-.btn-blue2,
-.btn-blue3,
-.btn-blue4 {
-    background: #7b92fa;
-    color: white;
-    border-bottom: 3px solid #5B6FB9;
-}
-
-/* Mantendo posicionamentos específicos */
 .btn-blue {
-    padding: 10px 20px;
-    margin-top: -100px;
-    height: 40px;
-    line-height: 10px;
+    background: #3498db; /* Azul mais vibrante */
+    color: white;
+    border-bottom: 3px solid #2980b9;
+}
+/* Estilo para o contêiner do input de senha */
+/* Estilo para o contêiner do input de senha */
+.password-wrapper {
+    position: relative;
+    width: 100%; /* Ou a largura que preferir */
 }
 
-.btn-blue2 {
-    margin-top: -52px;
-    margin-left: 60%;
-
-}
-
-.btn-blue3 {
-    margin-top: -90px;
-    margin-bottom: 30px;
-    height: 40px; /* Reduzi 4px */
-    padding: 8px 15px; /* Redução no padding vertical */
-    line-height: 18px; /* Ajuste proporcional */
-    border-bottom-width: 2px; 
-
-}
-/* Inputs */
-input[type="text"],
-input[type="password"],
-input[type="date"] {
-
-    width: 75%;
-    padding: 12px 12px;
+/* Estilo para o campo de senha */
+#escritorioPassword {
+    width: 100%;
+    padding: 12px;
+    padding-right: 40px; /* Espaço para o ícone de olho */
     margin-bottom: 10px;
     border: 1px solid #ccc;
     border-radius: 8px;
-    box-sizing: border-box;
     font-size: 1rem;
-    transition: border 0.3s;
-
+    transition: border 0.3s, box-shadow 0.3s;
 }
 
-input:focus {
+/* Estilo para o ícone do olho */
+.password-icon {
+    position: absolute;
+    right: 10px; /* Coloca o ícone à direita */
+    top: 43%;
+    transform: translateY(-50%); /* Centraliza o ícone verticalmente */
+    cursor: pointer;
+    width: 15px;  /* Tamanho do ícone */
+    height: 15px; /* Tamanho do ícone */
+}
+
+#togglePasswordIcon2 {
+    width: 100%;  /* Ajusta a imagem para 100% do tamanho */
+    height: 100%; /* Faz a imagem se ajustar proporcionalmente */
+    object-fit: contain; /* Mantém a proporção da imagem */
+}
+
+/* Quando o campo de senha está em foco */
+#escritorioPassword:focus {
     border-color: #1976d2;
     outline: none;
     box-shadow: 0 0 8px rgba(25, 118, 210, 0.2);
-
 }
 
-.input-wrapper {
 
-    margin-bottom: 15px;
-}
-
-.input-label {
-    margin-top: 10px;
-    margin-right: 10px;
-
-}
-.input-label2 {
-    margin-top: -5px;
-    margin-right: 6px;
-
-}
-.input-label3 {
-    margin-top: 12px;
-    margin-right: 6px;
-
-}
-.input-label4 {
-    margin-top: 12px;
-    margin-right: 6px;
-
-}
-/* Tabela */
-#tabela-horarios {
+/* Inputs e Seletores */
+input[type="text"],
+input[type="password"],
+input[type="date"],
+select {
     width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    background: #fafafa;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
     border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    font-size: 1rem;
+    transition: border 0.3s, box-shadow 0.3s;
 }
 
-#tabela-horarios th,
-#tabela-horarios td {
-    padding: 15px;
-    text-align: left;
-}
-
-#tabela-horarios th {
-    background: #000000;
-    color: white;
-    text-transform: uppercase;
-}
-
-#tabela-horarios tbody tr:nth-child(even) {
-    background: #e3f2fd;
-}
-
-#tabela-horarios tbody tr:hover {
-    background: #bbdefb;
-    cursor: pointer;
-}
-
-#tabela-horarios {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    background: #fafafa;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-#tabela-encomendas-wrapper {
-    width: 100%; /* Contêiner ocupa 100% da largura */
-    overflow-x: auto; /* Permite rolar horizontalmente se necessário */
-    padding: 0; /* Remove o padding adicional */
-    box-sizing: border-box; /* Garante que o padding ou bordas não afetem o tamanho do contêiner */
-}
-
-#tabela-encomendas {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 0; /* Remove o espaçamento superior */
-    background: #fafafa;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-#tabela-encomendas th,
-#tabela-encomendas td {
-    padding: 15px;
-    text-align: left;
-}
-
-#tabela-encomendas th {
-    background: #000000;
-    color: white;
-    text-transform: uppercase;
-}
-
-#tabela-encomendas tbody tr:nth-child(even) {
-    background: #e3f2fd;
-}
-
-#tabela-encomendas tbody tr:hover {
-    background: #bbdefb;
-    cursor: pointer;
-}
-
-
-/* Admin Área */
-#admin-area {
-    margin-top: 30px;
-}
-
-.filter {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-
-.filter input {
-    flex: 1;
-}
-
-/* Flex Containers */
-.flex {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
+input:focus,
+select:focus {
+    border-color: #1976d2;
+    outline: none;
+    box-shadow: 0 0 8px rgba(25, 118, 210, 0.2);
 }
 
 .flex-center {
     display: flex;
     justify-content: center;
-    margin: 10px;
-
-
-}
-.flex-center2 {
-    display: flex;
-    margin-left: 100px;
-
-
-}
-.flex-center3 {
-    display: flex;
-    margin-left: 95px;
-    
-
-
-}
-.flex-center4 {
-    display: flex;
-    margin-left: 340px;
-    width: 54%;
-
-}
-.flex-center5 {
-    display: flex;
-    margin-left: 334px;
-    margin-bottom: 10px;
-    
-
-}
-.flex-center6 {
-    display: flex;
-    margin-left: 318px;
-    margin-top: 10px;
-    width: 54%;  
-
-}
-.flex-center7 {
-    display: flex;
-    margin-left:300px;
-    width: 102%;  
-
-}
-.flex-center8 {
-    display: flex;
-    margin-left:292px;
-    margin-top: 10px;
-    width: 102%;  
-
-}
-.flex-center9 {
-    display: flex;
-    justify-content: center;
-    margin-left:100px;
-    margin-top: 11px;  
-
-}
-
-.flex-left {
-    display: flex;
-    justify-content: flex-start;
-    /* Alinha à esquerda */
-    margin-left: 25%;
-    /* Remove qualquer margem à esquerda */
+    gap: 10px;
+    margin-bottom: 20px;
 }
 
 .flex-right {
     display: flex;
     justify-content: flex-end;
-
-    /* Alinha os itens à direita */
+    gap: 10px;
+    margin-bottom: 20px;
 }
 
 .mensagem-sucesso {
     display: none;
-    position: relative;
+    padding: 15px;
+    background: #d4edda;
     color: #155724;
-    padding: 15px 25px;
-    background: linear-gradient(145deg, #d4edda, #c3e6cb);
-    border: 2px solid #28a745;
+    border: 1px solid #c3e6cb;
     border-radius: 8px;
     margin-top: 10px;
     text-align: center;
-    font-size: 16px;
-    font-weight: 600;
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
-    animation: slideInFade 0.5s ease-out;
-    transition: all 0.3s ease;
-    overflow: hidden;
 }
 
-.mensagem-sucesso::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 4px;
-    height: 100%;
-    background: #28a745;
-}
-
-.obra-select {
-    width: auto;
-
-    padding: 8px 150px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    box-sizing: border-box;
-    font-size: 1rem;
-    transition: border 0.3s, box-shadow 0.3s; /* Adicionado transition para a sombra */
-
-}
-.obra-select2 {
-    width: auto;
-
-    padding: 8px 170px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    box-sizing: border-box;
-    font-size: 1rem;
-    transition: border 0.3s, box-shadow 0.3s; /* Adicionado transition para a sombra */
-
-}
-.obra-select3{
-    width: auto;
-
-    padding: 8px 158px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    box-sizing: border-box;
-    font-size: 1rem;
-    transition: border 0.3s, box-shadow 0.3s; /* Adicionado transition para a sombra */
-
-}
-.obra-input {
-    width: auto;
-    padding: 8px 15px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    box-sizing: border-box;
-    font-size: 1rem;
-    transition: border 0.3s, box-shadow 0.3s; /* Adicionado transition para a sombra */
-
-}
-.obra-input2 {
-    width: 484px;
-    padding: 8px 15px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    box-sizing: border-box;
-    font-size: 1rem;
-    transition: border 0.3s, box-shadow 0.3s; /* Adicionado transition para a sombra */
-
-}
-.obra-select:focus {
-    border-color: #1976d2;
-    outline: none;
-    box-shadow: 0 0 8px rgba(25, 118, 210, 0.5);
-}
-
-.obra-select option {
-    padding: 10px;
-}
-
-.obra-select option:checked {
-    background-color: #192019;
-    color: white;
-}
-
-
-
-  
- 
 /* Animações */
 @keyframes fadeIn {
     from {
         opacity: 0;
         transform: translateY(-20px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
     }
 }
 
-@media (max-width: 1000px) {
-    .logo-container {
-        margin-bottom: -60px;
-
-    }
-    .input-label3 {
-        margin-top: 12px;
-        margin-left: -130px;
-    
-    }
-    .flex-center4 {
-        display: flex;
-        margin-left: 100px;
-        width: 54%;
-    
-    }
-    .flex-center3 {
-        display: flex;
-            width: 54%;
-    
-    }
-    .flex-center5 {
-        display: flex;
-            width: 54%;
-            margin-left: 95px;
-    
-    }
-    .flex-center6 {
-        display: flex;
-            width: 54%;
-            margin-left: 80px;
-    
-    }
-    .flex-center7 {
-        display: flex;
-        margin-left: 30%;
-        
-    
-    }
-    .flex-center8 {
-        display: flex;
-        margin-left:55px;
-        margin-top: 10px;
-        width: 102%;  
-    
-    }
- 
-    
+/* Responsividade */
+@media (max-width: 768px) {
     h1 {
-        font-size: 2.4rem;
-        margin-top: 0;
-        text-align: center;
-        color: #000000;
+        font-size: 1.8rem;
     }
 
-    /* Tamanho da fonte e padding para inputs e botões */
+    .btn {
+        width: 100%;
+        margin: 5px 0;
+    }
+
+    .flex-center {
+        flex-direction: column;
+    }
+
+    .flex-right {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 250px;
+    }
+
+    .toggle-btn {
+        left: 20px;
+    }
+
+    .logo {
+        max-width: 100px;
+    }
+
     input[type="text"],
     input[type="password"],
     input[type="date"],
-    .obra-select {
+    select {
         font-size: 0.9rem;
-        padding: 10px 159px;
-    }
-    .obra-select2 {
-        font-size: 0.9rem;
-        padding: 10px 159px;
-        
-    }
-
-    .btn {
-        font-size: 0.9rem;
-        padding: 8px 16px;
-        margin: 8px 4px;
-    }
-
-    .btn-blue {
-
-        padding: 10px 20px;
-        /* Ajuste o padding para um tamanho fixo */
-
-        margin-bottom: 20px;
-        height: 40px;
-        /* Defina um height fixo */
-        line-height: 10px;
-
-    }
-
-    .btn-blue2 {
-
-        background: #7b92fa;
-        color: white;
-
-
-    }
-
-    .btn-blue2:hover {
-        background: #5776ff;
-        transform: scale(1.02);
-    }
-
-    #tabela-horarios-wrapper {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch; /* Suaviza a rolagem em dispositivos iOS */
-      }
-      
-      /* Ajustes gerais na tabela */
-      #tabela-horarios {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.8rem; /* Reduz o tamanho da fonte */
-      }
-    
-      /* Cabeçalho e células da tabela */
-      #tabela-horarios th,
-      #tabela-horarios td {
-        padding: 8px;
-        text-align: left;
-      }
-    
-      /* Estilização do cabeçalho */
-      #tabela-horarios th {
-        background-color: #000;
-        color: #fff;
-        text-transform: uppercase;
-        font-size: 0.9rem;
-      }
-    
-      /* Alterna a cor das linhas para melhor visualização */
-      #tabela-horarios tbody tr:nth-child(even) {
-        background-color: #e3f2fd;
-      }
-    
-      /* Efeito hover para as linhas */
-      #tabela-horarios tbody tr:hover {
-        background-color: #bbdefb;
-      } /* Ajuste do tamanho das células */
-      
-    }
-   
-    
-    
-
-
-/* Responsividade para telas muito pequenas (máximo 480px) */
-@media (max-width: 650px) {
-    .logo-container {
-        margin-bottom: 50px;
-
-    }
-    .input-label3 {
-        
-        margin-top: 12px;
-        margin-left: -30px;
-    
-    }
-    .input-label4 {
-        
-        margin-top: 12px;
-        margin-left: -1px;
-    
-    }
-    .flex-left {
-        display: flex;
-        justify-content: flex-start;
-        /* Alinha à esquerda */
-        margin-left: 10%;
-        /* Remove qualquer margem à esquerda */
-    }
-    .flex-center3 {
-        display: flex;
-        margin-left: 20px;
-        width: 100%;
-    
-    }
-    .flex-center4 {
-        display: flex;
-        margin-left:40px;
-        width: 102%;
-    
-    }
-    .flex-center5 {
-        display: flex;
-        margin-left: 35px;
-        margin-bottom: 10px;
-        
-    
-    }
-    .flex-center6 {
-        display: flex;
-        margin-left:18px;
-        width: 102%;  
-    
-    }
-    .flex-center7 {
-        display: flex;
-        margin-left: 10%;
-        
-    
-    }
-    .flex-center8 {
-        display: flex;
-        margin-left:-8px;
-        margin-top: 10px;
-        width: 102%;  
-    
-    }
-    
-    /* Ajuste da largura dos botões */
-    h1 {
-        font-size: 2.4rem;
-        margin-top: -20px;
-        text-align: center;
-        color: #000000;
-    }
-
-    .btn {
-        font-size: 0.9rem;
-        padding: 6px 15px;
-        width: auto;
-
-    }
- 
-    .btn-blue3 {
-        background: #7b92fa;
-        color: white;
-        padding: 10px 20px;
-        /* Ajuste o padding para um tamanho fixo */
-        margin-top: -30px;
-        margin-bottom: 30px;
-        height: 40px;
-        /* Defina um height fixo */
-        line-height: 10px;
-        width: auto;
-    }
-
-    .btn-blue {
-
-        padding: 10px 20px;
-        /* Ajuste o padding para um tamanho fixo */
-        margin-top: -100px;
-        height: 40px;
-        /* Defina um height fixo */
-        line-height: 10px;
-        width: auto;
-    }
-
-    .btn-orange {
-        margin-top: -22px;
-        line-height: 10px;
-        height: 30px;
-        /* Defina um height fixo */
-        padding: 10px 20px;
-    }
-    .btn-blue4 {
-        margin-top: -22px;
-        line-height: 10px;
-        height: 30px;
-        padding: 10px 20px;
-    }
-    
-   
-
-    /* Ajustes nos inputs */
-    input[type="text"],
-    input[type="password"],
-    input[type="date"] {
-
-        width: 55%;
-        padding: 12px 12px;
-        margin-bottom: 10px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        box-sizing: border-box;
-        font-size: 1rem;
-        transition: border 0.3s;
-
-    }
-
-    .obra-select {
-        padding: 8px 42px;
-
-    }
-    .obra-select2 {
-        padding: 8px 53px;
-
-    }
-    .obra-select3 {
-        padding: 8px 41px;
-
-    }
-    .obra-input2 {
-        width: 250px;
-    
-  
-
-    }
-   
-
-
-    /* Ajuste no layout das colunas da tabela */
-    #tabela-horarios-wrapper {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch; /* Suaviza a rolagem em dispositivos iOS */
-      }
-      
-      /* Ajustes gerais na tabela */
-      #tabela-horarios {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.8rem; /* Reduz o tamanho da fonte */
-      }
-    
-      /* Cabeçalho e células da tabela */
-      #tabela-horarios th,
-      #tabela-horarios td {
-        padding: 8px;
-        text-align: left;
-      }
-    
-      /* Estilização do cabeçalho */
-      #tabela-horarios th {
-        background-color: #000;
-        color: #fff;
-        text-transform: uppercase;
-        font-size: 0.9rem;
-      }
-    
-      /* Alterna a cor das linhas para melhor visualização */
-      #tabela-horarios tbody tr:nth-child(even) {
-        background-color: #e3f2fd;
-      }
-    
-      /* Efeito hover para as linhas */
-      #tabela-horarios tbody tr:hover {
-        background-color: #bbdefb;
-      }
-      #tabela-encomendas-wrapper {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch; /* Suaviza a rolagem em dispositivos iOS */
-      }
-      
-      /* Ajustes gerais na tabela */
-      #tabela-encomendas {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.8rem; /* Reduz o tamanho da fonte */
-      }
-    
-      /* Cabeçalho e células da tabela */
-      #tabela-encomendas th,
-      #tabela-encomendas td {
-        padding: 8px;
-        text-align: left;
-      }
-    
-      /* Estilização do cabeçalho */
-      #tabela-encomendas th {
-        background-color: #000;
-        color: #fff;
-        text-transform: uppercase;
-        font-size: 0.9rem;
-      }
-    
-      /* Alterna a cor das linhas para melhor visualização */
-      #tabela-encomendas tbody tr:nth-child(even) {
-        background-color: #e3f2fd;
-      }
-    
-      /* Efeito hover para as linhas */
-      #tabela-encomendas tbody tr:hover {
-        background-color: #bbdefb;
-      }
-
-
-    .input-wrapper {
-        margin-bottom: 15px;
-        margin-left: 0px;
+        padding: 10px;
     }
 }
