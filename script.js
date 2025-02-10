@@ -285,7 +285,7 @@ async function picarPonto(tipo) {
       });
 
       if (registoResponse.ok) {
-        // Exibe imediatamente a mensagem de sucesso
+
         exibirMensagemSucesso();
 
         // Processa a resposta e atualiza a localização em segundo plano
@@ -499,6 +499,16 @@ async function salvarLocalizacao() {
 
                     registoExistente.localizacao = novoHistorico;
 
+                    function exibirMensagemSucesso() {
+                      const mensagemSucesso = document.getElementById('mensagem-sucesso');
+                      if (mensagemSucesso) {
+                        mensagemSucesso.style.display = 'block';
+                        setTimeout(() => {
+                          mensagemSucesso.style.display = 'none';
+                        }, 3500);
+                      }
+                    }
+
                     // Enviar atualização via PUT para Sheety
                     fetch(`${API_BASE}/horarios/${registoExistente.id}`, {
                       method: 'PUT',
@@ -506,14 +516,19 @@ async function salvarLocalizacao() {
                         'Content-Type': 'application/json'
                       },
                       body: JSON.stringify({ horario: registoExistente })
+                      
                     })
+                    
+              
                       .then(response => response.json())
-                      .then(data => {
-                        console.log('Histórico de localização atualizado no Sheety:', novoHistorico);
-                      })
-                      .catch(error => console.error('Erro ao atualizar localização no Sheety:', error));
-                  }
-                })
+                        .then(data => {
+                          console.log('Histórico de localização atualizado no Sheety:', novoHistorico);
+                            exibirMensagemSucesso();
+                    
+                        })
+                        .catch(error => console.error('Erro ao atualizar localização no Sheety:', error));
+                    }
+                  })
                 .catch(error => console.error('Erro ao buscar registro no Sheety:', error));
 
               resolve(endereco);
