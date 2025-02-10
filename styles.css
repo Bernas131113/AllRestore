@@ -304,8 +304,8 @@ select:focus {
 }
 .obra-input {
     width: 100%;
-    max-width: 300px; /* Ajuste conforme necessário */
-    padding: 10px 580px;
+    max-width: 1200px; /* Ajuste conforme necessário */
+    padding: 10px 10px;
     font-size: 1rem;
     border: 1px solid #ccc;
     border-radius: 8px;
