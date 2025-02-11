@@ -1163,8 +1163,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('form-material')) {
     carregarObrasEMateriais();
   }
-  if (document.getElementById('Password') && document.getElementById('togglePasswordLink1') && document.getElementById('togglePasswordIcon1')) {
-    adicionarOlhoParaSenha('Password', 'togglePasswordIcon1', 'togglePasswordLink1');
+  if (document.getElementById('Password') && document.getElementById('togglePasswordLink') && document.getElementById('togglePasswordIcon')) {
+    adicionarOlhoParaSenha('Password', 'togglePasswordIcon', 'togglePasswordLink');
   }
 
   if (document.getElementById('escritorioPassword') && document.getElementById('togglePasswordLink2') && document.getElementById('togglePasswordIcon2')) {

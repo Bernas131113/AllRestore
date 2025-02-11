@@ -248,6 +248,11 @@ h1 {
     height: 100%; /* Faz a imagem se ajustar proporcionalmente */
     object-fit: contain; /* Mantém a proporção da imagem */
 }
+#togglePasswordIcon {
+    width: 100%;  /* Ajusta a imagem para 100% do tamanho */
+    height: 100%; /* Faz a imagem se ajustar proporcionalmente */
+    object-fit: contain; /* Mantém a proporção da imagem */
+}
 
 /* Quando o campo de senha está em foco */
 #escritorioPassword:focus {
