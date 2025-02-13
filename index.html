@@ -7,6 +7,7 @@
     <link rel="apple-touch-icon" href="AllRestore-Logotipo-T180px.png">
     <title>AllRestore Area Reservada</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.2/xlsx.full.min.js"></script>
+    <script defer src="https://unpkg.com/face-api.js@latest/dist/face-api.min.js"></script>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
@@ -44,12 +45,15 @@
     <div id="registo-ponto-area">
 
 
-        <div class="flex-right">
+        <div class="flex-center">
             <button onclick="window.location.href='encomendar.html'" class="btn btn-blue">Pedir Material</button>
+            <button onclick="window.location.href='faltar.html'" class="btn btn-blue">Registar Falta</button>
         </div>
+       
+        <video id="video" width="480" height="360" autoplay muted></video>
 
         <h1>Registar Entrada/Saída</h1>
-
+       
         <form>
             <div class="flex-center">
                 <label for="nome">Nome:</label>
@@ -61,15 +65,18 @@
             <div class="flex-center">
                 <button type="button" class="btn btn-blue" onclick="salvarLocalizacao()">Mudança de obra</button>
             </div>
-
+           
+            <div id="loading-message" style="display: none;">
+                A carregar...
+              </div>
             <div id="mensagem-sucesso" class="mensagem-sucesso">
                 Registo realizado com sucesso!
             </div>
 
             <div class="flex-center">
                 <button type="button" class="btn btn-green" onclick="picarPonto('entrada')">Entrar</button>
-                <button type="button" class="btn btn-green" onclick="picarPonto('entradaAlmoco')">Entrada Almoço</button>
-                <button type="button" class="btn btn-red" onclick="picarPonto('saidaAlmoco')">Saída Almoço</button>
+                <button type="button" class="btn btn-red" onclick="picarPonto('entradaAlmoco')">Sair P/Almoço</button>
+                <button type="button" class="btn btn-green" onclick="picarPonto('saidaAlmoco')">Entrar P/Trabalho</button>
                 <button type="button" class="btn btn-red" onclick="picarPonto('saida')">Sair</button>
             </div>
         </form>

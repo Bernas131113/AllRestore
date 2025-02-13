@@ -260,8 +260,66 @@ h1 {
     outline: none;
     box-shadow: 0 0 8px rgba(25, 118, 210, 0.2);
 }
+.periodo-container {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
 
+.time-input {
+    flex: 1;
+}
 
+.obra-time {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    margin-top: 8px;
+}
+
+.obra-time:focus {
+    border-color: #4CAF50;
+    outline: none;
+}
+.flex-center8 .obra-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    line-height: 1.5;
+    resize: vertical;
+    transition: all 0.3s ease;
+}
+
+.flex-center8 .obra-textarea:focus {
+    outline: none;
+    border-color: #4A90E2;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+}
+
+.flex-center8 .obra-textarea::placeholder {
+    color: #999;
+    font-style: italic;
+}
+#loading-message {
+    
+    margin-top: 30px;
+    margin-bottom:-20px;
+    margin-left: 265px;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+    font-size: 18px;
+    text-align: center;
+    font-weight: bold;
+  }
+  
 /* Inputs e Seletores */
 input[type="text"],
 input[type="password"],

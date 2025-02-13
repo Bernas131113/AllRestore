@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autenticação Facial</title>
+  <script defer src="https://unpkg.com/face-api.js@latest/dist/face-api.min.js"></script>
+  <link rel="icon" href="data:,">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f3f4f6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 800px;
+      width: 100%;
+      text-align: center;
+    }
+    .video-container {
+      position: relative;
+      background: white;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    #video {
+      width: 100%;
+      border-radius: 0.375rem;
+    }
+    #overlay {
+      position: absolute;
+      top: 1.5rem;
+      left: 1.5rem;
+      width: calc(100% - 3rem);
+    }
+    .buttons {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    button {
+      padding: 0.75rem;
+      border: none;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      width: 100%;
+    }
+    #registerBtn { background-color: #2563eb; color: white; }
+    #registerBtn:hover { background-color: #1d4ed8; }
+    #verifyBtn { background-color: #059669; color: white; }
+    #verifyBtn:hover { background-color: #047857; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .status {
+      text-align: center;
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+    .success { color: #059669; }
+    .error { color: #dc2626; }
+    .loading {
+      text-align: center;
+      font-size: 1.25rem;
+      color: #4b5563;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Sistema de Autenticação Facial</h1>
+    
+    <div id="loading" class="loading">
+      Carregando modelos de reconhecimento facial...
+    </div>
+
+    <div id="main" style="display: none;">
+      <div class="video-container">
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="overlay"></canvas>
+      </div>
+
+      <div class="buttons">
+        <button id="registerBtn" onclick="registerFace()">📸 Registrar Rosto</button>
+        <button id="verifyBtn" onclick="verifyFace()">🔒 Verificar Identidade</button>
+      </div>
+
+      <div id="status" class="status"></div>
+    </div>
+  </div>
+
+  <script>
+    // URL da API para a planilha "Face"
+    const API_URL = "https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/face";
+    let video, overlay;
+
+    async function initFaceApi() {
+      try {
+        await faceapi.tf.setBackend('webgl');
+        await faceapi.tf.ready();
+
+        const MODEL_URL = 'models';
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+        ]);
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('main').style.display = 'block';
+        startVideo();
+      } catch (error) {
+        console.error('Erro ao carregar modelos:', error);
+      }
+    }
+
+    async function startVideo() {
+      video = document.getElementById('video');
+      overlay = document.getElementById('overlay');
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        video.srcObject = stream;
+      } catch (error) {
+        console.error('Erro ao acessar câmera:', error);
+        alert('Erro ao acessar a câmera. Verifique as permissões.');
+      }
+    }
+
+    async function registerFace() {
+      try {
+        const nome = prompt("Digite seu nome para registrar:");
+        if (!nome) {
+          alert('Nome inválido.');
+          return;
+        }
+
+        const detection = await faceapi.detectSingleFace(video)
+          .withFaceLandmarks()
+          .withFaceDescriptor();
+
+        if (!detection) {
+          alert('Nenhum rosto detectado.');
+          return;
+        }
+
+        const descriptor = Array.from(detection.descriptor);
+        
+        // Note: ajuste as chaves conforme os nomes exatos das colunas na sua planilha.
+        const bodyData = { 
+          face: {  
+            nome: nome,                      // Use "nome" se a coluna for minúscula
+            cara: JSON.stringify(descriptor) // Use "cara" se a coluna for minúscula
+          }
+        };
+
+        console.log("Enviando para Sheety:", bodyData);
+
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bodyData)
+        });
+
+        const result = await response.json();
+        console.log("Resposta da API:", result);
+
+        alert(response.ok ? '✅ Rosto registrado!' : '❌ Erro ao registrar.');
+      } catch (error) {
+        console.error('Erro ao registrar:', error);
+        alert('Erro ao registrar o rosto.');
+      }
+    }
+
+    async function verifyFace() {
+      try {
+        const detection = await faceapi.detectSingleFace(video)
+          .withFaceLandmarks()
+          .withFaceDescriptor();
+        
+        if (!detection) {
+          alert('Nenhum rosto detectado.');
+          return;
+        }
+
+        const currentDescriptor = Array.from(detection.descriptor);
+        const response = await fetch(API_URL);
+        const data = await response.json();
+
+        if (!data.face || data.face.length === 0) {
+          alert('Nenhum rosto registrado.');
+          return;
+        }
+
+        let bestMatch = { nome: '', distance: Infinity };
+
+        data.face.forEach(entry => {
+          const savedDescriptor = JSON.parse(entry.cara); // Verifica se a chave está em minúscula
+          const distance = faceapi.euclideanDistance(currentDescriptor, savedDescriptor);
+          if (distance < bestMatch.distance) {
+            bestMatch = { nome: entry.nome, distance: distance };
+          }
+        });
+
+        const status = document.getElementById('status');
+        if (bestMatch.distance < 0.6) {
+          status.textContent = `✅ Autenticado: ${bestMatch.nome}`;
+          status.className = 'status success';
+        } else {
+          status.textContent = '❌ Não reconhecido';
+          status.className = 'status error';
+        }
+      } catch (error) {
+        console.error('Erro ao verificar:', error);
+        alert('Erro ao verificar identidade.');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initFaceApi);
+  </script>
+</body>
+</html>

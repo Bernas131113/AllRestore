@@ -1,6 +1,67 @@
 
 let isAdmin = false;
-// Função para obter os dados da API Sheety e armazenar em constantes
+
+
+let cache = {
+  loginData: null,
+  horariosData: null,
+  lastUpdate: 0
+};
+
+// Pré-carregar dados (executar no carregamento da página)
+async function preloadData(API_BASE) {
+  const now = Date.now();
+  if (!cache.loginData || now - cache.lastUpdate > 300000) { // 5 minutos de cache
+      const [loginRes, horariosRes] = await Promise.all([
+          fetch(`${API_BASE}/login`),
+          fetch(`${API_BASE}/horarios`)
+      ]);
+      cache.loginData = await loginRes.json();
+      cache.horariosData = await horariosRes.json();
+      cache.lastUpdate = now;
+  }
+}
+
+
+document.addEventListener("DOMContentLoaded", async function () {
+  const credenciais = await obterCredenciais();
+
+  if (!credenciais) {
+    alert('Não foi possível carregar as credenciais');
+    return;
+  }
+
+  const PIN = String(credenciais.PIN).trim();
+
+  if (window.location.pathname === "/" || window.location.pathname.endsWith("index.html")) {
+    if (!localStorage.getItem("acessoLiberado")) {
+      function pedirPIN() {
+        let pinDigitado = prompt("Introduza o PIN:"); // Removido o trim() inicial
+
+        // Tratamento para quando o usuário clica em Cancelar
+        if (pinDigitado === null) {
+          alert("É necessário inserir o PIN para acessar!");
+          pedirPIN(); // Força nova tentativa
+          return;
+        }
+
+        pinDigitado = pinDigitado.trim(); // Agora seguro para usar trim()
+
+        if (pinDigitado === PIN) {
+          localStorage.setItem("acessoLiberado", "true");
+          // Recarrega para aplicar o acesso
+          window.location.reload();
+        } else {
+          alert("PIN incorreto! Tente novamente.");
+          pedirPIN(); // Nova tentativa após erro
+        }
+      }
+
+      pedirPIN();
+    }
+  }
+});
+
 async function obterCredenciais() {
   try {
     const response = await fetch('https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/credenciais');
@@ -55,44 +116,52 @@ async function obterCredenciais() {
     return null;
   }
 }
+document.addEventListener('DOMContentLoaded', () => {
 
-document.addEventListener("DOMContentLoaded", async function () {
-  const credenciais = await obterCredenciais();
-
-  if (!credenciais) {
-    alert('Não foi possível carregar as credenciais');
-    return;
+  if (document.getElementById('nome')) {
+    carregarNomes();
   }
 
-  const PIN = String(credenciais.PIN).trim();
+  // Carrega encomendas na área de escritório
+  if (document.getElementById('tabela-encomendas')) {
+    carregarEncomendas();
+  }
+  if (document.getElementById('tabela-faltas')) {
+    carregarFaltas();
+  }
 
-  if (window.location.pathname === "/" || window.location.pathname.endsWith("index.html")) {
-    if (!localStorage.getItem("acessoLiberado")) {
-      function pedirPIN() {
-        let pinDigitado = prompt("Introduza o PIN:"); // Removido o trim() inicial
+  // Adiciona event listeners específicos
+  const formMaterial = document.getElementById('form-material');
+  if (formMaterial) {
+    formMaterial.addEventListener('submit', registrarMaterial);
+  }
+  const formfalta = document.getElementById('form-falta');
+  if (formfalta) {
+    formfalta.addEventListener('submit', registrarFaltas);
+  }
 
-        // Tratamento para quando o usuário clica em Cancelar
-        if (pinDigitado === null) {
-          alert("É necessário inserir o PIN para acessar!");
-          pedirPIN(); // Força nova tentativa
-          return;
-        }
-
-        pinDigitado = pinDigitado.trim(); // Agora seguro para usar trim()
-
-        if (pinDigitado === PIN) {
-          localStorage.setItem("acessoLiberado", "true");
-          // Recarrega para aplicar o acesso
-          window.location.reload();
-        } else {
-          alert("PIN incorreto! Tente novamente.");
-          pedirPIN(); // Nova tentativa após erro
-        }
-      }
-
-      pedirPIN();
+  if (document.getElementById('tabela-horariosadmin')) {
+    carregarHorarios();
+  }
+  if (document.getElementById('tabela-horarios')) {
+    const loggedUser = localStorage.getItem("loggedUser");
+    if (loggedUser) {
+      CarregarHorariosFunc(loggedUser);
     }
   }
+
+
+  if (document.getElementById('form-material')) {
+    carregarObrasEMateriais();
+  }
+  if (document.getElementById('Password') && document.getElementById('togglePasswordLink') && document.getElementById('togglePasswordIcon')) {
+    adicionarOlhoParaSenha('Password', 'togglePasswordIcon', 'togglePasswordLink');
+  }
+
+  if (document.getElementById('escritorioPassword') && document.getElementById('togglePasswordLink2') && document.getElementById('togglePasswordIcon2')) {
+    adicionarOlhoParaSenha('escritorioPassword', 'togglePasswordIcon2', 'togglePasswordLink2');
+  }
+
 });
 
 function carregarPagina(pagina) {
@@ -205,184 +274,229 @@ async function verificarCredenciaisEscritorio() {
 
 
 async function picarPonto(tipo) {
-  const nomeElement = document.getElementById('nome');
-  const obra = document.getElementById('obra') ? document.getElementById('obra').value : '';
-  const credenciais = await obterCredenciais();
-  const API_BASE = String(credenciais.API_BASE).trim();
+  mostrarCarregamento();
+  
+  try {
+      // Elementos e valores básicos (otimizado)
+      const nome = document.getElementById('nome')?.value;
+      if (!nome) {
+          alert('Por favor, selecione o seu nome');
+          return;
+      }
+      const obra = document.getElementById('obra')?.value || '';
 
-  if (!nomeElement) {
-    console.error('Elemento de nome não encontrado!');
-    return;
+      // Credenciais e API
+      const credenciais = await obterCredenciais();
+      const API_BASE = String(credenciais.API_BASE).trim();
+
+      // Pré-carregar dados em paralelo com verificação facial
+      const [faceValida] = await Promise.all([
+          verifyUserFace(nome),
+          preloadData(API_BASE)
+      ]);
+
+      if (!faceValida) {
+          alert('Falha na verificação facial!');
+          return;
+      }
+
+      // Dados do cache
+      const { loginData, horariosData } = cache;
+      if (!loginData.login.some(user => user.nome === nome)) {
+          alert('Nome errado.');
+          return;
+      }
+
+      // Data/hora otimizada
+      const now = new Date();
+      const dataFormatada = now.toISOString().split('T')[0].split('-').reverse().join('/');
+      const horaFormatada = now.toTimeString().slice(0,5);
+
+      // Registro existente (uso de Map para acesso rápido)
+      const registosMap = new Map(horariosData.horarios.map(item => [`${item.nome}-${item.data}`, item]));
+      const registoExistente = registosMap.get(`${nome}-${dataFormatada}`);
+
+      // Funções auxiliares
+      const exibirMensagemSucesso = () => {
+          document.getElementById('mensagem-sucesso').style.display = 'block';
+          setTimeout(() => {
+              document.getElementById('mensagem-sucesso').style.display = 'none';
+          }, 3500);
+      };
+
+      // Lógica de registro otimizada
+      const actions = {
+          entrada: async () => {
+              if (registoExistente) throw new Error('Registro de entrada já existe');
+              
+              const novoRegisto = {
+                  nome, data: dataFormatada, horaEntrada: horaFormatada, obraManha: obra,
+                  horaSaida: null, entradaAlmoco: null, saidaAlmoco: null, obraTarde: null, localizacao: null
+              };
+
+              const res = await fetch(`${API_BASE}/horarios`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ horario: novoRegisto })
+              });
+
+              if (!res.ok) throw new Error('Erro ao registrar entrada');
+              
+              // Localização em background sem await
+              res.json().then(registroCriado => {
+                  salvarLocalizacao().then(endereco => {
+                      if (endereco && registroCriado.horario?.id) {
+                          fetch(`${API_BASE}/horarios/${registroCriado.horario.id}`, {
+                              method: 'PUT',
+                              body: JSON.stringify({ ...registroCriado.horario, localizacao: endereco })
+                          });
+                      }
+                  });
+              });
+          },
+
+          entradaAlmoco: async () => {
+              if (!registoExistente) throw new Error('Sem registro de entrada');
+              await updateField('entradaAlmoco', horaFormatada);
+          },
+
+          saidaAlmoco: async () => {
+              if (!registoExistente?.entradaAlmoco) throw new Error('Sem entrada de almoço');
+              await updateField('saidaAlmoco', horaFormatada);
+          },
+
+          saida: async () => {
+              if (!registoExistente) throw new Error('Sem registro de entrada');
+              await updateField('horaSaida', horaFormatada);
+          }
+      };
+
+      await actions[tipo]();
+      exibirMensagemSucesso();
+
+  } catch (error) {
+      alert(error.message);
+      console.error(error);
+  } finally {
+      esconderCarregamento();
   }
 
-  const nome = nomeElement.value;  // Obtém o nome do dropdown
+  async function updateField(field, value) {
+      const updated = { ...registoExistente, [field]: value };
+      const res = await fetch(`${API_BASE}/horarios/${registoExistente.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ horario: updated })
+      });
+      if (!res.ok) throw new Error(`Erro ao atualizar ${field}`);
+  }
+}
+function mostrarCarregamento() {
+  const loadingMessage = document.getElementById('loading-message');
+  if (loadingMessage) {
+    loadingMessage.style.display = 'block';
+  }
+}
 
-  // Validação se o nome foi selecionado
-  if (!nome) {
-    alert('Por favor, selecione o seu nome');
+function esconderCarregamento() {
+  const loadingMessage = document.getElementById('loading-message');
+  if (loadingMessage) {
+    loadingMessage.style.display = 'none';
+  }
+}
+
+async function verifyUserFace(nome) {
+  try {
+    // Detectar a cara no vídeo
+    const detection = await faceapi.detectSingleFace(video)
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+
+    if (!detection) {
+      alert('Nenhum rosto detectado.');
+      return false;
+    }
+
+    // Obter descriptor atual
+    const currentDescriptor = Array.from(detection.descriptor);
+
+    // Buscar a cara registrada para o nome selecionado
+    const credenciais = await obterCredenciais();
+    const API_BASE = String(credenciais.API_BASE).trim();
+    const response = await fetch(`${API_BASE}/login`);
+    const data = await response.json();
+
+    // Encontrar o usuário e sua cara
+    const usuario = data.login.find(u => u.nome === nome);
+    if (!usuario || !usuario.cara) {
+      alert('Usuário sem registro facial.');
+      return false;
+    }
+
+    // Comparar descriptors
+    const savedDescriptor = JSON.parse(usuario.cara);
+    const distance = faceapi.euclideanDistance(currentDescriptor, savedDescriptor);
+
+    return distance < 0.6; // Mesmo threshold da verificação original
+
+  } catch (error) {
+    console.error('Erro na verificação:', error);
+    alert('Erro ao verificar identidade.');
+    return false;
+  }
+}
+
+let video;
+
+if (window.location.pathname.endsWith("index.html") || window.location.pathname === "/") {
+  document.addEventListener('DOMContentLoaded', async () => {
+    const videoElement = document.getElementById('video');
+    if (videoElement) videoElement.style.display = 'none';
+
+    await initFaceApi();
+  });
+}
+
+async function initFaceApi() {
+  try {
+    await faceapi.tf.ready(); // Garante que o backend TensorFlow.js está pronto
+
+    const MODEL_URL = 'models';
+    
+    // Carrega os modelos em paralelo e captura erros individuais
+    const modelos = [
+      faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL).catch(err => console.error("Erro ao carregar ssdMobilenetv1:", err)),
+      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL).catch(err => console.error("Erro ao carregar faceLandmark68Net:", err)),
+      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL).catch(err => console.error("Erro ao carregar faceRecognitionNet:", err))
+    ];
+
+    await Promise.all(modelos);
+
+    startVideo(); // Inicia a câmera apenas após os modelos serem carregados
+  } catch (error) {
+    console.error('Erro geral ao carregar modelos:', error);
+  }
+}
+
+
+async function startVideo() {
+  video = document.getElementById('video');
+  if (!video) {
+    console.error('Elemento de vídeo não encontrado!');
     return;
   }
 
   try {
-    // Validação de login
-    const responseLogin = await fetch(`${API_BASE}/login`);
-    const dataLogin = await responseLogin.json();
-    const nomeValido = dataLogin.login.some(user => user.nome === nome);
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    video.srcObject = stream;
 
-    if (!nomeValido) {
-      alert('Nome errado.');
-      return;
-    }
-
-    // Obter dados de horários
-    const response = await fetch(`${API_BASE}/horarios`);
-    const data = await response.json();
-    const dataAtual = new Date();
-    const dataFormatada = dataAtual.toLocaleDateString('pt-PT');
-    const horaFormatada = dataAtual.getHours().toString().padStart(2, '0') + ':' +
-      dataAtual.getMinutes().toString().padStart(2, '0');
-
-    // Verificar se já existe um registro para o nome e data
-    const registoExistente = data.horarios.find(item => item.nome === nome && item.data === dataFormatada);
-
-    // Função auxiliar para exibir a mensagem de sucesso
-    function exibirMensagemSucesso() {
-      const mensagemSucesso = document.getElementById('mensagem-sucesso');
-      if (mensagemSucesso) {
-        mensagemSucesso.style.display = 'block';
-        setTimeout(() => {
-          mensagemSucesso.style.display = 'none';
-        }, 3500);
-      }
-    }
-
-    if (tipo === 'entrada') {
-      if (registoExistente) {
-        alert('Já existe um registro de entrada para hoje.');
-        return;
-      }
-
-      // Criação de novo registro com as horas e campos necessários
-      const novoRegisto = {
-        nome: nome,
-        data: dataFormatada,
-        horaEntrada: horaFormatada,
-        obraManha: obra, // Salva a obra na coluna ObraManha
-        horaSaida: null,
-        entradaAlmoco: null,
-        saidaAlmoco: null,
-        obraTarde: null, // Inicialmente null
-        localizacao: null // Inicialmente null
-      };
-
-      // Realiza o POST do novo registro
-      const registoResponse = await fetch(`${API_BASE}/horarios`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ horario: novoRegisto })
-      });
-
-      if (registoResponse.ok) {
-
-        exibirMensagemSucesso();
-
-        // Processa a resposta e atualiza a localização em segundo plano
-        registoResponse.json().then(registroCriado => {
-          salvarLocalizacao()
-            .then(endereco => {
-              if (endereco && registroCriado.horario && registroCriado.horario.id) {
-                // Atualiza o campo localizacao do registro criado
-                fetch(`${API_BASE}/horarios/${registroCriado.horario.id}`, {
-                  method: 'PUT',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    horario: {
-                      ...registroCriado.horario,
-                      localizacao: endereco
-                    }
-                  })
-                });
-              }
-            })
-            .catch(error => console.error("Erro ao atualizar localização:", error));
-        });
-      } else {
-        alert('Erro ao registrar entrada.');
-      }
-    } else if (tipo === 'entradaAlmoco') {
-      if (!registoExistente) {
-        alert('Não há um registro de entrada para hoje.');
-        return;
-      }
-
-      // Atualizar a hora de entrada para almoço
-      registoExistente.entradaAlmoco = horaFormatada;
-
-      const registoResponse = await fetch(`${API_BASE}/horarios/${registoExistente.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ horario: registoExistente })
-      });
-
-      if (registoResponse.ok) {
-        exibirMensagemSucesso();
-      } else {
-        alert('Erro ao registrar entrada de almoço.');
-      }
-    } else if (tipo === 'saidaAlmoco') {
-      if (!registoExistente || !registoExistente.entradaAlmoco) {
-        alert('Não há registro de entrada de almoço.');
-        return;
-      }
-
-      // Atualizar a hora de saída para almoço
-      registoExistente.saidaAlmoco = horaFormatada;
-
-      const registoResponse = await fetch(`${API_BASE}/horarios/${registoExistente.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ horario: registoExistente })
-      });
-
-      if (registoResponse.ok) {
-        exibirMensagemSucesso();
-      } else {
-        alert('Erro ao registrar saída de almoço.');
-      }
-    } else if (tipo === 'saida') {
-      if (!registoExistente) {
-        alert('Não foi registrado a entrada.');
-        return;
-      }
-
-      // Atualizar a hora de saída do trabalho
-      registoExistente.horaSaida = horaFormatada;
-
-      const registoResponse = await fetch(`${API_BASE}/horarios/${registoExistente.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ horario: registoExistente })
-      });
-
-      if (registoResponse.ok) {
-        exibirMensagemSucesso();
-      } else {
-        alert('Erro ao registrar saída.');
-      }
-    }
+    video.addEventListener('loadedmetadata', () => {
+      video.play();
+      console.log("Câmera ativada!");
+    });
   } catch (error) {
-    alert('Erro ao picar o ponto.');
-    console.error(error);
+    console.error('Erro ao acessar câmera:', error);
+    alert('Erro ao acessar a câmera. Verifique as permissões.');
   }
 }
 
@@ -516,19 +630,19 @@ async function salvarLocalizacao() {
                         'Content-Type': 'application/json'
                       },
                       body: JSON.stringify({ horario: registoExistente })
-                      
+
                     })
-                    
-              
+
+
                       .then(response => response.json())
-                        .then(data => {
-                          console.log('Histórico de localização atualizado no Sheety:', novoHistorico);
-                            exibirMensagemSucesso();
-                    
-                        })
-                        .catch(error => console.error('Erro ao atualizar localização no Sheety:', error));
-                    }
-                  })
+                      .then(data => {
+                        console.log('Histórico de localização atualizado no Sheety:', novoHistorico);
+                        exibirMensagemSucesso();
+
+                      })
+                      .catch(error => console.error('Erro ao atualizar localização no Sheety:', error));
+                  }
+                })
                 .catch(error => console.error('Erro ao buscar registro no Sheety:', error));
 
               resolve(endereco);
@@ -605,11 +719,20 @@ function aplicarFiltros() {
 }
 
 function formatarDataParaYYYYMMDD(data) {
-  // Se a data já estiver no formato correto, retorna diretamente
-  if (data.includes('-')) return data;
+  // Verifica se a data está no formato ISO (YYYY-MM-DD)
+  if (data.includes('-')) {
+    const [ano, mes, dia] = data.split('-');
+    return `${dia.padStart(2, '0')}/${mes.padStart(2, '0')}/${ano}`;
+  }
 
-  const [dia, mes, ano] = data.split('/');
-  return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+  // Verifica se já está no formato DD/MM/AAAA mas com componentes incompletos
+  if (data.includes('/')) {
+    const [dia, mes, ano] = data.split('/');
+    return `${dia.padStart(2, '0')}/${mes.padStart(2, '0')}/${ano}`;
+  }
+
+  // Caso não seja nenhum dos formatos conhecidos, retorna a data original
+  return data;
 }
 
 let editando = false;
@@ -913,6 +1036,67 @@ async function carregarEncomendas() {
   }
 }
 
+async function carregarFaltas() {
+  const tabelaFaltas = document.getElementById('tabela-faltas');
+  const credenciais = await obterCredenciais();
+  const API_BASE = String(credenciais.API_BASE).trim();
+  if (!tabelaFaltas) return;
+
+  // Função para calcular a diferença entre horários
+  function calcularDuracao(inicio, fim) {
+    try {
+      const [inicioH, inicioM] = inicio.split(':').map(Number);
+      const [fimH, fimM] = fim.split(':').map(Number);
+      
+      const totalInicio = inicioH * 60 + inicioM;
+      const totalFim = fimH * 60 + fimM;
+      
+      if (totalFim < totalInicio) return '00:00:00';
+      
+      const diff = totalFim - totalInicio;
+      const horas = Math.floor(diff / 60);
+      const minutos = diff % 60;
+      
+      return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`;
+    } catch {
+      return '00:00:00';
+    }
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/faltas`);
+    const data = await response.json();
+    const tbody = tabelaFaltas.getElementsByTagName('tbody')[0];
+    tbody.innerHTML = '';
+
+    data.faltas.forEach(registo => {
+      const tr = document.createElement('tr');
+      tr.setAttribute("data-id", registo.id);
+
+      // Juntar início e fim
+      const periodo = `${registo.inicio || '--:--'} - ${registo.fim || '--:--'}`;
+      
+      // Calcular total de horas
+      const totalHoras = (registo.inicio && registo.fim) 
+        ? calcularDuracao(registo.inicio, registo.fim)
+        : '00:00:00';
+
+      tr.innerHTML = `
+        <td>${registo.nome || 'Sem nome'}</td>
+        <td>${registo.data || 'Sem data'}</td>
+        <td>${registo.dataFalta || 'Sem data'}</td>
+        <td>${periodo}</td>
+        <td>${totalHoras}</td>
+        <td>${registo.motivo || 'Sem motivo'}</td>
+        
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (error) {
+    console.error('Erro ao carregar faltas:', error);
+  }
+}
+
 async function marcarComoTratada(id, botao) {
   let estaTratada;
   const credenciais = await obterCredenciais();
@@ -1007,6 +1191,64 @@ async function excluirLinhaEscritorio(linhaElement) {
   }
 }
 
+function ativarModoExclusaoFaltas() {
+  modoExclusaoAtivo = !modoExclusaoAtivo;
+
+  const botaoExcluir = document.getElementById("btn-excluir");
+  botaoExcluir.innerText = modoExclusaoAtivo ? "Concluído" : "Excluir"; // Altera o texto do botão
+
+  document.querySelectorAll("#tabela-faltas tbody tr").forEach(linha => {
+    if (modoExclusaoAtivo) {
+      botaoExcluir.innerText = "Concluído";
+      botaoExcluir.style.backgroundColor = "green"; // Fundo verde
+      botaoExcluir.style.color = "white"; // Texto branco
+      if (!linha.querySelector(".btn-excluir")) {
+        const botaoExcluirLinha = document.createElement("td");
+        botaoExcluirLinha.classList.add("btn-excluir");
+        botaoExcluirLinha.innerHTML = "❌";
+        botaoExcluirLinha.style.cursor = "pointer";
+        botaoExcluirLinha.style.color = "red";
+        botaoExcluirLinha.style.fontSize = "20px";
+        botaoExcluirLinha.onclick = () => excluirLinhaFaltas(linha);
+        linha.appendChild(botaoExcluirLinha);
+      }
+    } else {
+      // Remove os botões de exclusão ao desativar o modo
+      const botaoExcluirLinha = linha.querySelector(".btn-excluir");
+      if (botaoExcluirLinha) botaoExcluirLinha.remove();
+    }
+  });
+}
+
+async function excluirLinhaFaltas(linhaElement) {
+  const id = linhaElement.dataset.id;
+  const credenciais = await obterCredenciais();
+  const API_BASE = String(credenciais.API_BASE).trim();
+
+  if (!confirm("Tem certeza que deseja excluir esta falta?")) {
+    return;
+  }
+
+  try {
+    // Requisição DELETE para a API
+    const response = await fetch(`${API_BASE}/faltas/${id}`, {
+      method: "DELETE"
+    });
+
+    if (!response.ok) {
+      alert(`Erro ao excluir o registro com ID ${id}`);
+      return;
+    }
+
+    // Remove a linha do DOM
+    linhaElement.remove();
+
+    alert("Falta excluída com sucesso!");
+  } catch (error) {
+    console.error(`Erro ao excluir Falta com ID ${id}:`, error);
+  }
+}
+
 async function registrarMaterial(event) {
   event.preventDefault();
   const credenciais = await obterCredenciais();
@@ -1053,6 +1295,61 @@ async function registrarMaterial(event) {
   } catch (error) {
     console.error('Erro ao registrar material:', error);
     alert('Erro ao registrar o material. Tente novamente.');
+  }
+}
+
+async function registrarFaltas(event) {
+  event.preventDefault();
+  const credenciais = await obterCredenciais();
+  const API_BASE = String(credenciais.API_BASE).trim();
+
+  // Obter valores do formulário
+  const nome = document.getElementById('nome').value;
+  const dataFalta = document.getElementById('datafalta').value;
+  const motivoFalta = document.getElementById('motivofalta').value;
+  const horaInicio = document.getElementById('horainicio').value;
+  const horaFim = document.getElementById('horafim').value;
+
+  // Validação
+  if (!nome || !dataFalta || !motivoFalta || !horaInicio || !horaFim) {
+      alert("Preencha todos os campos!");
+      return;
+  }
+
+  try {
+      // Enviar para API
+      const response = await fetch(`${API_BASE}/faltas`, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+              falta: {
+                  nome: nome,
+                  data: new Date().toLocaleDateString('pt-PT'), // Data registro
+                  dataFalta: formatarDataParaYYYYMMDD(dataFalta), // Data falta
+                  inicio: horaInicio,
+                  fim: horaFim, 
+                  motivo: motivoFalta
+              }
+          }),
+      });
+
+      if (!response.ok) {
+          throw new Error('Erro na API: ' + response.statusText);
+          
+      }
+      const exibirMensagemSucesso = () => {
+        document.getElementById('mensagem-sucesso').style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('mensagem-sucesso').style.display = 'none';
+        }, 3500);
+    };
+      exibirMensagemSucesso();
+      document.getElementById('form-falta').reset();
+  } catch (error) {
+      console.error('Erro:', error);
+      alert('Erro ao registrar.');
   }
 }
 
@@ -1132,46 +1429,6 @@ function toggleSidebar() {
   sidebar.classList.toggle('open');
   overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
 }
-document.addEventListener('DOMContentLoaded', () => {
-
-  if (document.getElementById('nome')) {
-    carregarNomes();
-  }
-
-  // Carrega encomendas na área de escritório
-  if (document.getElementById('tabela-encomendas')) {
-    carregarEncomendas();
-  }
-
-  // Adiciona event listeners específicos
-  const formMaterial = document.getElementById('form-material');
-  if (formMaterial) {
-    formMaterial.addEventListener('submit', registrarMaterial);
-  }
-
-  if (document.getElementById('tabela-horariosadmin')) {
-    carregarHorarios();
-  }
-  if (document.getElementById('tabela-horarios')) {
-    const loggedUser = localStorage.getItem("loggedUser");
-    if (loggedUser) {
-      CarregarHorariosFunc(loggedUser);
-    }
-  }
-
-
-  if (document.getElementById('form-material')) {
-    carregarObrasEMateriais();
-  }
-  if (document.getElementById('Password') && document.getElementById('togglePasswordLink') && document.getElementById('togglePasswordIcon')) {
-    adicionarOlhoParaSenha('Password', 'togglePasswordIcon', 'togglePasswordLink');
-  }
-
-  if (document.getElementById('escritorioPassword') && document.getElementById('togglePasswordLink2') && document.getElementById('togglePasswordIcon2')) {
-    adicionarOlhoParaSenha('escritorioPassword', 'togglePasswordIcon2', 'togglePasswordLink2');
-  }
-
-});
 
 
 
