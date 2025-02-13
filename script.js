@@ -275,121 +275,123 @@ async function verificarCredenciaisEscritorio() {
 
 async function picarPonto(tipo) {
   mostrarCarregamento();
-  
+  let registoExistente; // Declarado no escopo da função para ser acessível em todo o código
+
   try {
-      // Elementos e valores básicos (otimizado)
-      const nome = document.getElementById('nome')?.value;
-      if (!nome) {
-          alert('Por favor, selecione o seu nome');
-          return;
-      }
-      const obra = document.getElementById('obra')?.value || '';
+    // Elementos e valores básicos (otimizado)
+    const nome = document.getElementById('nome')?.value;
+    if (!nome) {
+      alert('Por favor, selecione o seu nome');
+      return;
+    }
+    const obra = document.getElementById('obra')?.value || '';
 
-      // Credenciais e API
-      const credenciais = await obterCredenciais();
-      const API_BASE = String(credenciais.API_BASE).trim();
+    // Credenciais e API
+    const credenciais = await obterCredenciais();
+    const API_BASE = String(credenciais.API_BASE).trim();
 
-      // Pré-carregar dados em paralelo com verificação facial
-      const [faceValida] = await Promise.all([
-          verifyUserFace(nome),
-          preloadData(API_BASE)
-      ]);
+    // Pré-carregar dados em paralelo com verificação facial
+    const [faceValida] = await Promise.all([
+      verifyUserFace(nome),
+      preloadData(API_BASE)
+    ]);
 
-      if (!faceValida) {
-          alert('Falha na verificação facial!');
-          return;
-      }
+    if (!faceValida) {
+      alert('Falha na verificação facial!');
+      return;
+    }
 
-      // Dados do cache
-      const { loginData, horariosData } = cache;
-      if (!loginData.login.some(user => user.nome === nome)) {
-          alert('Nome errado.');
-          return;
-      }
+    // Dados do cache
+    const { loginData, horariosData } = cache;
+    if (!loginData.login.some(user => user.nome === nome)) {
+      alert('Nome errado.');
+      return;
+    }
 
-      // Data/hora otimizada
-      const now = new Date();
-      const dataFormatada = now.toISOString().split('T')[0].split('-').reverse().join('/');
-      const horaFormatada = now.toTimeString().slice(0,5);
+    // Data/hora otimizada
+    const now = new Date();
+    const dataFormatada = now.toISOString().split('T')[0].split('-').reverse().join('/');
+    const horaFormatada = now.toTimeString().slice(0, 5);
 
-      // Registro existente (uso de Map para acesso rápido)
-      const registosMap = new Map(horariosData.horarios.map(item => [`${item.nome}-${item.data}`, item]));
-      const registoExistente = registosMap.get(`${nome}-${dataFormatada}`);
+    // Registro existente (uso de Map para acesso rápido)
+    const registosMap = new Map(horariosData.horarios.map(item => [`${item.nome}-${item.data}`, item]));
+    registoExistente = registosMap.get(`${nome}-${dataFormatada}`); // Atribuição ao registoExistente
 
-      // Funções auxiliares
-      const exibirMensagemSucesso = () => {
-          document.getElementById('mensagem-sucesso').style.display = 'block';
-          setTimeout(() => {
-              document.getElementById('mensagem-sucesso').style.display = 'none';
-          }, 3500);
-      };
+    // Funções auxiliares
+    const exibirMensagemSucesso = () => {
+      document.getElementById('mensagem-sucesso').style.display = 'block';
+      setTimeout(() => {
+        document.getElementById('mensagem-sucesso').style.display = 'none';
+      }, 3500);
+    };
 
-      // Lógica de registro otimizada
-      const actions = {
-          entrada: async () => {
-              if (registoExistente) throw new Error('Registro de entrada já existe');
-              
-              const novoRegisto = {
-                  nome, data: dataFormatada, horaEntrada: horaFormatada, obraManha: obra,
-                  horaSaida: null, entradaAlmoco: null, saidaAlmoco: null, obraTarde: null, localizacao: null
-              };
+    // Lógica de registro otimizada
+    const actions = {
+      entrada: async () => {
+        if (registoExistente) throw new Error('Registro de entrada já existe');
 
-              const res = await fetch(`${API_BASE}/horarios`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ horario: novoRegisto })
+        const novoRegisto = {
+          nome, data: dataFormatada, horaEntrada: horaFormatada, obraManha: obra,
+          horaSaida: null, entradaAlmoco: null, saidaAlmoco: null, obraTarde: null, localizacao: null
+        };
+
+        const res = await fetch(`${API_BASE}/horarios`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ horario: novoRegisto })
+        });
+
+        if (!res.ok) throw new Error('Erro ao registrar entrada');
+
+        // Localização em background sem await
+        res.json().then(registroCriado => {
+          salvarLocalizacao().then(endereco => {
+            if (endereco && registroCriado.horario?.id) {
+              fetch(`${API_BASE}/horarios/${registroCriado.horario.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ ...registroCriado.horario, localizacao: endereco })
               });
+            }
+          });
+        });
+      },
 
-              if (!res.ok) throw new Error('Erro ao registrar entrada');
-              
-              // Localização em background sem await
-              res.json().then(registroCriado => {
-                  salvarLocalizacao().then(endereco => {
-                      if (endereco && registroCriado.horario?.id) {
-                          fetch(`${API_BASE}/horarios/${registroCriado.horario.id}`, {
-                              method: 'PUT',
-                              body: JSON.stringify({ ...registroCriado.horario, localizacao: endereco })
-                          });
-                      }
-                  });
-              });
-          },
+      entradaAlmoco: async () => {
+        if (!registoExistente) throw new Error('Sem registro de entrada');
+        await updateField(API_BASE, registoExistente, 'entradaAlmoco', horaFormatada);
+      },
 
-          entradaAlmoco: async () => {
-              if (!registoExistente) throw new Error('Sem registro de entrada');
-              await updateField('entradaAlmoco', horaFormatada);
-          },
+      saidaAlmoco: async () => {
+        if (!registoExistente?.entradaAlmoco) throw new Error('Sem entrada de almoço');
+        await updateField(API_BASE, registoExistente, 'saidaAlmoco', horaFormatada);
+      },
 
-          saidaAlmoco: async () => {
-              if (!registoExistente?.entradaAlmoco) throw new Error('Sem entrada de almoço');
-              await updateField('saidaAlmoco', horaFormatada);
-          },
+      saida: async () => {
+        if (!registoExistente) throw new Error('Sem registro de entrada');
+        await updateField(API_BASE, registoExistente, 'horaSaida', horaFormatada);
+      }
+    };
 
-          saida: async () => {
-              if (!registoExistente) throw new Error('Sem registro de entrada');
-              await updateField('horaSaida', horaFormatada);
-          }
-      };
-
-      await actions[tipo]();
-      exibirMensagemSucesso();
+    await actions[tipo]();
+    exibirMensagemSucesso();
 
   } catch (error) {
-      alert(error.message);
-      console.error(error);
+    alert(error.message);
+    console.error(error);
   } finally {
-      esconderCarregamento();
+    esconderCarregamento();
   }
+}
 
-  async function updateField(field, value) {
-      const updated = { ...registoExistente, [field]: value };
-      const res = await fetch(`${API_BASE}/horarios/${registoExistente.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ horario: updated })
-      });
-      if (!res.ok) throw new Error(`Erro ao atualizar ${field}`);
-  }
+// Função updateField agora recebe API_BASE como parâmetro
+async function updateField(API_BASE, registoExistente, field, value) {
+  const updated = { ...registoExistente, [field]: value };
+  const res = await fetch(`${API_BASE}/horarios/${registoExistente.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ horario: updated })
+  });
+  if (!res.ok) throw new Error(`Erro ao atualizar ${field}`);
 }
 function mostrarCarregamento() {
   const loadingMessage = document.getElementById('loading-message');
