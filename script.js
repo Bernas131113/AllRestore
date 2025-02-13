@@ -759,9 +759,9 @@ async function carregarHorarios(nomeFiltro = '', dataFiltro = '') {
 
     // Ordena os horários pela data (mais recente para mais antiga)
     horariosFiltrados.sort((a, b) => {
-      const dateA = new Date(formatarDataParaYYYYMMDD(a.data));
-      const dateB = new Date(formatarDataParaYYYYMMDD(b.data));
-      return dateB - dateA;  // Ordem decrescente (mais recente primeiro)
+      const dateA = converterDataParaDate(a.data); // Converte DD/MM/AAAA para Date
+      const dateB = converterDataParaDate(b.data); // Converte DD/MM/AAAA para Date
+      return dateB - dateA; // Ordena do mais recente para o mais antigo
     });
 
     // Exibe os horários na tabela
@@ -782,8 +782,6 @@ async function carregarHorarios(nomeFiltro = '', dataFiltro = '') {
           : 'N/A'}
                 </td>
                 <td contenteditable="false">${registo.localizacao || 'Não picado'}</td>
-                
-                
             `;
       tabelaHorarios.appendChild(tr);
     });
@@ -794,6 +792,11 @@ async function carregarHorarios(nomeFiltro = '', dataFiltro = '') {
   }
 }
 
+// Função auxiliar para converter DD/MM/AAAA em um objeto Date
+function converterDataParaDate(data) {
+  const [dia, mes, ano] = data.split('/');
+  return new Date(`${ano}-${mes}-${dia}`); // Converte para YYYY-MM-DD
+}
 async function CarregarHorariosFunc(nomeUsuario, dataFiltro = '') {
   const credenciais = await obterCredenciais();
   const API_BASE = String(credenciais.API_BASE).trim();
@@ -822,9 +825,9 @@ async function CarregarHorariosFunc(nomeUsuario, dataFiltro = '') {
 
     // Ordena os horários por data (mais recente primeiro)
     horariosFiltrados.sort((a, b) => {
-      const dateA = new Date(formatarDataParaYYYYMMDD(a.data));
-      const dateB = new Date(formatarDataParaYYYYMMDD(b.data));
-      return dateB - dateA;
+      const dateA = converterDataParaDate(a.data); // Converte DD/MM/AAAA para Date
+      const dateB = converterDataParaDate(b.data); // Converte DD/MM/AAAA para Date
+      return dateB - dateA; // Ordena do mais recente para o mais antigo
     });
 
     // Exibe os horários na tabela
