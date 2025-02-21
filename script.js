@@ -1,5 +1,5 @@
 let isAdmin = false;
-const API_KEY = process.env.SHEETY_API_KEY;
+
 const CACHE_TTL = 300000; // 5 minutes in milliseconds
 const cache = new Map();
 
@@ -92,7 +92,7 @@ async function preloadData(API_BASE) {
 
   async function obterCredenciais() {
     try {
-      const response = await fetch(`https://api.sheety.co/${API_KEY}/allRestore/credenciais`);
+      const response = await fetch('https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/credenciais');
   
       if (!response.ok) {
         throw new Error('Erro ao buscar as credenciais');
