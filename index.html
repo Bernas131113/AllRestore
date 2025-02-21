@@ -54,30 +54,21 @@
 
         <h1>Registar Entrada/Saída</h1>
        
-        <form>
+        <form>          
             <div class="flex-center">
-                <label for="nome">Nome:</label>
-                <select id="nome" class="obra-select2">
-                    <option value="" selected>Selecione o seu nome</option>
-                </select>
+                <button type="button" class="btn btn-green" onclick="picarPonto('entrada')">Entrar</button>
+                <button type="button" class="btn btn-red" onclick="picarPonto('entradaAlmoco')">Sair P/Almoço</button>
+                <button type="button" class="btn btn-green" onclick="picarPonto('saidaAlmoco')">Entrar P/Trabalho</button>
+                <button type="button" class="btn btn-red" onclick="picarPonto('saida')">Sair</button>
             </div>
-
-            <div class="flex-center">
-                <button type="button" class="btn btn-blue" onclick="salvarLocalizacao()">Mudança de obra</button>
-            </div>
-           
             <div id="loading-message" style="display: none;">
                 A carregar...
               </div>
             <div id="mensagem-sucesso" class="mensagem-sucesso">
                 Registo realizado com sucesso!
             </div>
-
             <div class="flex-center">
-                <button type="button" class="btn btn-green" onclick="picarPonto('entrada')">Entrar</button>
-                <button type="button" class="btn btn-red" onclick="picarPonto('entradaAlmoco')">Sair P/Almoço</button>
-                <button type="button" class="btn btn-green" onclick="picarPonto('saidaAlmoco')">Entrar P/Trabalho</button>
-                <button type="button" class="btn btn-red" onclick="picarPonto('saida')">Sair</button>
+                <button type="button" class="btn btn-blue" onclick="registarMudancaObra()">Mudança de obra</button>
             </div>
         </form>
     </div>

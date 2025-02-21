@@ -1,121 +1,148 @@
-
 let isAdmin = false;
 
+const CACHE_TTL = 300000; // 5 minutes in milliseconds
+const cache = new Map();
 
-let cache = {
-  loginData: null,
-  horariosData: null,
-  lastUpdate: 0
-};
-
-// Pré-carregar dados (executar no carregamento da página)
+// Improved caching with separate TTLs and error handling
 async function preloadData(API_BASE) {
-  const now = Date.now();
-  if (!cache.loginData || now - cache.lastUpdate > 300000) { // 5 minutos de cache
-      const [loginRes, horariosRes] = await Promise.all([
-          fetch(`${API_BASE}/login`),
-          fetch(`${API_BASE}/horarios`)
-      ]);
-      cache.loginData = await loginRes.json();
-      cache.horariosData = await horariosRes.json();
-      cache.lastUpdate = now;
-  }
+    const now = Date.now();
+    
+    // Check if cache needs refresh
+    const shouldRefresh = !cache.has('loginData') || 
+                         !cache.has('horariosData') ||
+                         (now - (cache.get('lastUpdate') || 0) > CACHE_TTL);
+
+    if (shouldRefresh) {
+        try {
+            const [loginRes, horariosRes] = await Promise.all([
+                fetch(`${API_BASE}/login`),
+                fetch(`${API_BASE}/horarios`)
+            ]);
+            
+            if (!loginRes.ok || !horariosRes.ok) {
+                throw new Error('Failed to fetch data');
+            }
+
+            const [loginData, horariosData] = await Promise.all([
+                loginRes.json(),
+                horariosRes.json()
+            ]);
+
+            // Update cache
+            cache.set('loginData', loginData);
+            cache.set('horariosData', horariosData);
+            cache.set('lastUpdate', now);
+            
+        } catch (error) {
+            console.error('Cache update failed:', error);
+            // Use stale cache if available
+            if (!cache.has('loginData') || !cache.has('horariosData')) {
+                throw error; // Re-throw if no cache available
+            }
+        }
+    }
+    
+    return {
+        loginData: cache.get('loginData'),
+        horariosData: cache.get('horariosData')
+    };
 }
 
 
-document.addEventListener("DOMContentLoaded", async function () {
-  const credenciais = await obterCredenciais();
 
-  if (!credenciais) {
-    alert('Não foi possível carregar as credenciais');
-    return;
-  }
-
-  const PIN = String(credenciais.PIN).trim();
-
-  if (window.location.pathname === "/" || window.location.pathname.endsWith("index.html")) {
-    if (!localStorage.getItem("acessoLiberado")) {
-      function pedirPIN() {
-        let pinDigitado = prompt("Introduza o PIN:"); // Removido o trim() inicial
-
-        // Tratamento para quando o usuário clica em Cancelar
-        if (pinDigitado === null) {
-          alert("É necessário inserir o PIN para acessar!");
-          pedirPIN(); // Força nova tentativa
-          return;
+  document.addEventListener("DOMContentLoaded", async function () {
+    const credenciais = await obterCredenciais();
+  
+    if (!credenciais) {
+      alert('Não foi possível carregar as credenciais');
+      return;
+    }
+  
+    const PIN = String(credenciais.PIN).trim();
+  
+    if (window.location.pathname === "/" || window.location.pathname.endsWith("index.html")) {
+      if (!localStorage.getItem("acessoLiberado")) {
+        function pedirPIN() {
+          let pinDigitado = prompt("Introduza o PIN:"); // Removido o trim() inicial
+  
+          // Tratamento para quando o usuário clica em Cancelar
+          if (pinDigitado === null) {
+            alert("É necessário inserir o PIN para acessar!");
+            pedirPIN(); // Força nova tentativa
+            return;
+          }
+  
+          pinDigitado = pinDigitado.trim(); // Agora seguro para usar trim()
+  
+          if (pinDigitado === PIN) {
+            localStorage.setItem("acessoLiberado", "true");
+            // Recarrega para aplicar o acesso
+            window.location.reload();
+          } else {
+            alert("PIN incorreto! Tente novamente.");
+            pedirPIN(); // Nova tentativa após erro
+          }
         }
-
-        pinDigitado = pinDigitado.trim(); // Agora seguro para usar trim()
-
-        if (pinDigitado === PIN) {
-          localStorage.setItem("acessoLiberado", "true");
-          // Recarrega para aplicar o acesso
-          window.location.reload();
-        } else {
-          alert("PIN incorreto! Tente novamente.");
-          pedirPIN(); // Nova tentativa após erro
-        }
+  
+        pedirPIN();
       }
+    }
+  });
+  
 
-      pedirPIN();
+  async function obterCredenciais() {
+    try {
+      const response = await fetch('https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/credenciais');
+  
+      if (!response.ok) {
+        throw new Error('Erro ao buscar as credenciais');
+      }
+  
+      const data = await response.json();
+  
+      // Verificar se os dados possuem a chave 'credenciais'
+      if (data && data.credenciais) {
+        const credenciais = data.credenciais;
+  
+        // Armazenar os valores das credenciais em constantes
+        const PIN = credenciais.find(record => record.chave === 'PIN')?.valor || '';
+        const UTILIZADOR_1 = credenciais.find(record => record.chave === 'UTILIZADOR_1')?.valor || '';
+        const PASSWORD_1 = credenciais.find(record => record.chave === 'PASSWORD_1')?.valor || '';
+        const UTILIZADOR_2 = credenciais.find(record => record.chave === 'UTILIZADOR_2')?.valor || '';
+        const PASSWORD_2 = credenciais.find(record => record.chave === 'PASSWORD_2')?.valor || '';
+        const UTILIZADOR_3 = credenciais.find(record => record.chave === 'UTILIZADOR_3')?.valor || '';
+        const PASSWORD_3 = credenciais.find(record => record.chave === 'PASSWORD_3')?.valor || '';
+        const UTILIZADOR_4 = credenciais.find(record => record.chave === 'UTILIZADOR_4')?.valor || '';
+        const PASSWORD_4 = credenciais.find(record => record.chave === 'PASSWORD_4')?.valor || '';
+        const UTILIZADOR_5 = credenciais.find(record => record.chave === 'UTILIZADOR_5')?.valor || '';
+        const PASSWORD_5 = credenciais.find(record => record.chave === 'PASSWORD_5')?.valor || '';
+        const API_BASE = credenciais.find(record => record.chave === 'API_BASE')?.valor || '';
+        const APIKEYOPENCAGE = credenciais.find(record => record.chave === 'APIKEYOPENCAGE')?.valor || '';
+  
+        // Retorna as credenciais ou armazene-as onde for necessário
+        return {
+          PIN,
+          UTILIZADOR_1,
+          PASSWORD_1,
+          UTILIZADOR_2,
+          PASSWORD_2,
+          UTILIZADOR_3,
+          PASSWORD_3,
+          UTILIZADOR_4,
+          PASSWORD_4,
+          UTILIZADOR_5,
+          PASSWORD_5,
+          API_BASE,
+          APIKEYOPENCAGE,
+        };
+      } else {
+        throw new Error('Estrutura de dados inesperada');
+      }
+    } catch (error) {
+      console.error('Erro ao obter credenciais:', error);
+      return null;
     }
   }
-});
-
-async function obterCredenciais() {
-  try {
-    const response = await fetch('https://api.sheety.co/132d984e4fe1f112d58fbe5f0e51b03d/allRestore/credenciais');
-
-    if (!response.ok) {
-      throw new Error('Erro ao buscar as credenciais');
-    }
-
-    const data = await response.json();
-
-    // Verificar se os dados possuem a chave 'credenciais'
-    if (data && data.credenciais) {
-      const credenciais = data.credenciais;
-
-      // Armazenar os valores das credenciais em constantes
-      const PIN = credenciais.find(record => record.chave === 'PIN')?.valor || '';
-      const UTILIZADOR_1 = credenciais.find(record => record.chave === 'UTILIZADOR_1')?.valor || '';
-      const PASSWORD_1 = credenciais.find(record => record.chave === 'PASSWORD_1')?.valor || '';
-      const UTILIZADOR_2 = credenciais.find(record => record.chave === 'UTILIZADOR_2')?.valor || '';
-      const PASSWORD_2 = credenciais.find(record => record.chave === 'PASSWORD_2')?.valor || '';
-      const UTILIZADOR_3 = credenciais.find(record => record.chave === 'UTILIZADOR_3')?.valor || '';
-      const PASSWORD_3 = credenciais.find(record => record.chave === 'PASSWORD_3')?.valor || '';
-      const UTILIZADOR_4 = credenciais.find(record => record.chave === 'UTILIZADOR_4')?.valor || '';
-      const PASSWORD_4 = credenciais.find(record => record.chave === 'PASSWORD_4')?.valor || '';
-      const UTILIZADOR_5 = credenciais.find(record => record.chave === 'UTILIZADOR_5')?.valor || '';
-      const PASSWORD_5 = credenciais.find(record => record.chave === 'PASSWORD_5')?.valor || '';
-      const API_BASE = credenciais.find(record => record.chave === 'API_BASE')?.valor || '';
-      const APIKEYOPENCAGE = credenciais.find(record => record.chave === 'APIKEYOPENCAGE')?.valor || '';
-
-      // Retorna as credenciais ou armazene-as onde for necessário
-      return {
-        PIN,
-        UTILIZADOR_1,
-        PASSWORD_1,
-        UTILIZADOR_2,
-        PASSWORD_2,
-        UTILIZADOR_3,
-        PASSWORD_3,
-        UTILIZADOR_4,
-        PASSWORD_4,
-        UTILIZADOR_5,
-        PASSWORD_5,
-        API_BASE,
-        APIKEYOPENCAGE,
-
-      };
-    } else {
-      throw new Error('Estrutura de dados inesperada');
-    }
-  } catch (error) {
-    console.error('Erro ao obter credenciais:', error);
-    return null;
-  }
-}
 document.addEventListener('DOMContentLoaded', () => {
 
   if (document.getElementById('nome')) {
@@ -181,6 +208,26 @@ function logout() {
   carregarPagina('index.html');
 }
 
+// Pré-carregar dados (executar no carregamento da página)
+async function preloadData(API_BASE) {
+    const now = Date.now();
+    if (!cache.loginData || now - cache.lastUpdate > 300000) { // 5 minutos de cache
+        try {
+            const [loginRes, horariosRes] = await Promise.all([
+                fetch(`${API_BASE}/login`),
+                fetch(`${API_BASE}/horarios`)
+            ]);
+            if (!loginRes.ok || !horariosRes.ok) {
+                throw new Error('Erro ao carregar dados');
+            }
+            cache.loginData = await loginRes.json();
+            cache.horariosData = await horariosRes.json();
+            cache.lastUpdate = now;
+        } catch (error) {
+            console.error('Erro ao pré-carregar dados:', error);
+        }
+    }
+}
 function admin() {
   carregarPagina('login.html');
 }
@@ -190,11 +237,12 @@ function escritorio() {
 }
 
 async function verificarCredenciais() {
-  const utilizador = document.getElementById('utilizador').value;
-  const Password = document.getElementById('Password').value;
+  const utilizador = document.getElementById('utilizador').value.trim();
+  const Password = document.getElementById('Password').value.trim();
 
   // Obter as credenciais antes de utilizá-las
   const credenciais = await obterCredenciais();
+
 
 
   if (!credenciais) {
@@ -275,100 +323,102 @@ async function verificarCredenciaisEscritorio() {
 
 async function picarPonto(tipo) {
   mostrarCarregamento();
-  let registoExistente; // Declarado no escopo da função para ser acessível em todo o código
+  let registoExistente;
+  const exibirMensagemSucesso = () => {
+    const mensagemSucesso = document.getElementById('mensagem-sucesso');
+    if (mensagemSucesso) {
+      mensagemSucesso.style.display = 'block';
+      setTimeout(() => {
+        mensagemSucesso.style.display = 'none';
+      }, 3500);
+    }
+  };
 
   try {
-    // Elementos e valores básicos (otimizado)
-    const nome = document.getElementById('nome')?.value;
+    // 1. Verificação facial para obter o NOME
+    const nome = await verifyUserFace();
     if (!nome) {
-      alert('Por favor, selecione o seu nome');
-      return;
-    }
-    const obra = document.getElementById('obra')?.value || '';
-
-    // Credenciais e API
-    const credenciais = await obterCredenciais();
-    const API_BASE = String(credenciais.API_BASE).trim();
-
-    // Pré-carregar dados em paralelo com verificação facial
-    const [faceValida] = await Promise.all([
-      verifyUserFace(nome),
-      preloadData(API_BASE)
-    ]);
-
-    if (!faceValida) {
       alert('Falha na verificação facial!');
       return;
     }
 
-    // Dados do cache
+    // 2. Obter dados necessários
+    const obra = document.getElementById('obra')?.value || '';
+    const credenciais = await obterCredenciais();
+    const API_BASE = String(credenciais.API_BASE).trim();
+    
+    // 3. Pré-carregar dados e validar usuário
+    await preloadData(API_BASE);
     const { loginData, horariosData } = cache;
+    
     if (!loginData.login.some(user => user.nome === nome)) {
-      alert('Nome errado.');
+      alert('Usuário não cadastrado!');
       return;
     }
 
-    // Data/hora otimizada
+    // 4. Formatar data/hora
     const now = new Date();
-    const dataFormatada = now.toISOString().split('T')[0].split('-').reverse().join('/');
+    const dataFormatada = now.toLocaleDateString('pt-PT'); // DD/MM/AAAA
     const horaFormatada = now.toTimeString().slice(0, 5);
 
-    // Registro existente (uso de Map para acesso rápido)
-    const registosMap = new Map(horariosData.horarios.map(item => [`${item.nome}-${item.data}`, item]));
-    registoExistente = registosMap.get(`${nome}-${dataFormatada}`); // Atribuição ao registoExistente
+    // 5. Encontrar registro existente
+    registoExistente = horariosData.horarios.find(
+      item => item.nome === nome && item.data === dataFormatada
+    );
 
-    // Funções auxiliares
-    const exibirMensagemSucesso = () => {
-      document.getElementById('mensagem-sucesso').style.display = 'block';
-      setTimeout(() => {
-        document.getElementById('mensagem-sucesso').style.display = 'none';
-      }, 3500);
-    };
-
-    // Lógica de registro otimizada
+    // 6. Lógica principal por tipo de registro
     const actions = {
       entrada: async () => {
-        if (registoExistente) throw new Error('Registro de entrada já existe');
+        if (registoExistente) {
+          throw new Error('Já registou entrada hoje!');
+        }
 
+        // Criar novo registro
         const novoRegisto = {
-          nome, data: dataFormatada, horaEntrada: horaFormatada, obraManha: obra,
-          horaSaida: null, entradaAlmoco: null, saidaAlmoco: null, obraTarde: null, localizacao: null
+          nome,
+          data: dataFormatada,
+          horaEntrada: horaFormatada,
+          horaSaida: null,
+          entradaAlmoco: null,
+          saidaAlmoco: null,
+          localizacao: null
         };
 
+        // POST inicial
         const res = await fetch(`${API_BASE}/horarios`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ horario: novoRegisto })
         });
-
+        exibirMensagemSucesso();
         if (!res.ok) throw new Error('Erro ao registrar entrada');
 
-        // Localização em background sem await
-        res.json().then(registroCriado => {
-          salvarLocalizacao().then(endereco => {
-            if (endereco && registroCriado.horario?.id) {
-              fetch(`${API_BASE}/horarios/${registroCriado.horario.id}`, {
-                method: 'PUT',
-                body: JSON.stringify({ ...registroCriado.horario, localizacao: endereco })
-              });
-            }
-          });
-        });
+        // Salvar localização IMEDIATAMENTE após criação
+      
+          const endereco = await salvarLocalizacao(nome, dataFormatada);
+          console.log('Localização salva:', endereco);
+          
+          // Atualizar cache local
+          const novoRegistroComLocal = await res.json();
+          cache.horariosData.horarios.push(novoRegistroComLocal.horario);
+          exibirMensagemSucesso();
+
       },
 
       entradaAlmoco: async () => {
-        if (!registoExistente) throw new Error('Sem registro de entrada');
+        if (!registoExistente) throw new Error('Registre entrada primeiro!');
         await updateField(API_BASE, registoExistente, 'entradaAlmoco', horaFormatada);
       },
 
       saidaAlmoco: async () => {
-        if (!registoExistente?.entradaAlmoco) throw new Error('Sem entrada de almoço');
+        if (!registoExistente?.entradaAlmoco) throw new Error('Registre entrada do almoço primeiro!');
         await updateField(API_BASE, registoExistente, 'saidaAlmoco', horaFormatada);
       },
 
       saida: async () => {
-        if (!registoExistente) throw new Error('Sem registro de entrada');
+        if (!registoExistente) throw new Error('Registre entrada primeiro!');
         await updateField(API_BASE, registoExistente, 'horaSaida', horaFormatada);
+
       }
     };
 
@@ -376,12 +426,16 @@ async function picarPonto(tipo) {
     exibirMensagemSucesso();
 
   } catch (error) {
-    alert(error.message);
-    console.error(error);
+    console.error('Erro', error);
   } finally {
     esconderCarregamento();
+    // Atualizar dados após operação
+    cache.lastUpdate = 0; // Forçar refresh no próximo acesso
   }
+  
 }
+
+
 
 // Função updateField agora recebe API_BASE como parâmetro
 async function updateField(API_BASE, registoExistente, field, value) {
@@ -407,46 +461,36 @@ function esconderCarregamento() {
   }
 }
 
-async function verifyUserFace(nome) {
-  try {
-    // Detectar a cara no vídeo
-    const detection = await faceapi.detectSingleFace(video)
-      .withFaceLandmarks()
-      .withFaceDescriptor();
+async function verifyUserFace() {
+  const detection = await faceapi.detectSingleFace(video)
+    .withFaceLandmarks()
+    .withFaceDescriptor();
 
-    if (!detection) {
-      alert('Nenhum rosto detectado.');
-      return false;
-    }
-
-    // Obter descriptor atual
-    const currentDescriptor = Array.from(detection.descriptor);
-
-    // Buscar a cara registrada para o nome selecionado
-    const credenciais = await obterCredenciais();
-    const API_BASE = String(credenciais.API_BASE).trim();
-    const response = await fetch(`${API_BASE}/login`);
-    const data = await response.json();
-
-    // Encontrar o usuário e sua cara
-    const usuario = data.login.find(u => u.nome === nome);
-    if (!usuario || !usuario.cara) {
-      alert('Usuário sem registro facial.');
-      return false;
-    }
-
-    // Comparar descriptors
-    const savedDescriptor = JSON.parse(usuario.cara);
-    const distance = faceapi.euclideanDistance(currentDescriptor, savedDescriptor);
-
-    return distance < 0.6; // Mesmo threshold da verificação original
-
-  } catch (error) {
-    console.error('Erro na verificação:', error);
-    alert('Erro ao verificar identidade.');
-    return false;
+  if (!detection) {
+    alert('Nenhum rosto detectado.');
+    return null;
   }
+
+  const currentDescriptor = Array.from(detection.descriptor);
+  const credenciais = await obterCredenciais();
+  const API_BASE = String(credenciais.API_BASE).trim();
+  const response = await fetch(`${API_BASE}/login`);
+  const data = await response.json();
+
+  for (const usuario of data.login) {
+    if (usuario.cara) {
+      const savedDescriptor = JSON.parse(usuario.cara);
+      const distance = faceapi.euclideanDistance(currentDescriptor, savedDescriptor);
+      if (distance < 0.6) {
+        return usuario.nome; // Retorna o nome do usuário se a verificação for bem-sucedida
+      }
+    }
+  }
+
+  alert('Usuário não reconhecido. Por favor, tente novamente.');
+  return null;
 }
+
 
 let video;
 
@@ -460,24 +504,15 @@ if (window.location.pathname.endsWith("index.html") || window.location.pathname 
 }
 
 async function initFaceApi() {
-  try {
-    await faceapi.tf.ready(); // Garante que o backend TensorFlow.js está pronto
+  await faceapi.tf.ready();
+  const MODEL_URL = 'models';
+  await Promise.all([
+    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+  ]);
+  startVideo();
 
-    const MODEL_URL = 'models';
-    
-    // Carrega os modelos em paralelo e captura erros individuais
-    const modelos = [
-      faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL).catch(err => console.error("Erro ao carregar ssdMobilenetv1:", err)),
-      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL).catch(err => console.error("Erro ao carregar faceLandmark68Net:", err)),
-      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL).catch(err => console.error("Erro ao carregar faceRecognitionNet:", err))
-    ];
-
-    await Promise.all(modelos);
-
-    startVideo(); // Inicia a câmera apenas após os modelos serem carregados
-  } catch (error) {
-    console.error('Erro geral ao carregar modelos:', error);
-  }
 }
 
 
@@ -487,7 +522,7 @@ async function startVideo() {
     console.error('Elemento de vídeo não encontrado!');
     return;
   }
-
+  
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
     video.srcObject = stream;
@@ -568,105 +603,96 @@ async function carregarObrasEMateriais() {
   }
 }
 
-async function salvarLocalizacao() {
+async function salvarLocalizacao(nome, dataFormatada) {
   const credenciais = await obterCredenciais();
-  const APIKEYOPENCAGE = String(credenciais.APIKEYOPENCAGE).trim();
   const API_BASE = String(credenciais.API_BASE).trim();
-  return new Promise((resolve) => {
-    if (navigator.geolocation) {
-      const options = {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0
-      };
+  const APIKEYOPENCAGE = String(credenciais.APIKEYOPENCAGE).trim();
 
-      navigator.geolocation.getCurrentPosition(function (position) {
+  return new Promise((resolve, reject) => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(async function (position) {
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
-        const openCageApiKey = APIKEYOPENCAGE;
-        const openCageUrl = `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${openCageApiKey}&language=pt`;
+        const openCageUrl = `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${APIKEYOPENCAGE}&language=pt`;
 
-        fetch(openCageUrl)
-          .then(response => response.json())
-          .then(data => {
-            if (data.results.length > 0) {
-              let enderecoCompleto = data.results[0].formatted;
-              console.log('Endereço Completo:', enderecoCompleto);
+        try {
+          const response = await fetch(openCageUrl);
+          const data = await response.json();
+          
+          if (data.results.length > 0) {
+            const enderecoCompleto = data.results[0].formatted;
+            
+            const urlHorarios = `${API_BASE}/horarios`;
+            const horariosResponse = await fetch(urlHorarios);
+            const horariosData = await horariosResponse.json();
+            const registoExistente = horariosData.horarios.find(
+              item => item.nome === nome && item.data === dataFormatada
+            );
 
-              let endereco = enderecoCompleto.split(',').slice(0, 3).join(',');
-              console.log('Endereço Extraído:', endereco);
+            if (registoExistente) {
+              // Nova lógica para acumular localizações
+              const novaLocalizacao = registoExistente.localizacao 
+                ? `${registoExistente.localizacao} || ${enderecoCompleto}`
+                : enderecoCompleto;
 
-              // Agora, atualiza no Sheety
-              const nome = document.getElementById('nome').value;
-              const dataAtual = new Date();
-              const dataFormatada = dataAtual.toLocaleDateString('pt-PT');
-
-              const urlHorarios = `${API_BASE}/horarios`;
-
-              fetch(urlHorarios)
-                .then(response => response.json())
-                .then(data => {
-                  const registoExistente = data.horarios.find(item => item.nome === nome && item.data === dataFormatada);
-
-                  if (registoExistente) {
-                    let novoHistorico = registoExistente.localizacao
-                      ? registoExistente.localizacao + " || " + endereco
-                      : endereco;
-
-                    registoExistente.localizacao = novoHistorico;
-
-                    function exibirMensagemSucesso() {
-                      const mensagemSucesso = document.getElementById('mensagem-sucesso');
-                      if (mensagemSucesso) {
-                        mensagemSucesso.style.display = 'block';
-                        setTimeout(() => {
-                          mensagemSucesso.style.display = 'none';
-                        }, 3500);
-                      }
-                    }
-
-                    // Enviar atualização via PUT para Sheety
-                    fetch(`${API_BASE}/horarios/${registoExistente.id}`, {
-                      method: 'PUT',
-                      headers: {
-                        'Content-Type': 'application/json'
-                      },
-                      body: JSON.stringify({ horario: registoExistente })
-
-                    })
-
-
-                      .then(response => response.json())
-                      .then(data => {
-                        console.log('Histórico de localização atualizado no Sheety:', novoHistorico);
-                        exibirMensagemSucesso();
-
-                      })
-                      .catch(error => console.error('Erro ao atualizar localização no Sheety:', error));
-                  }
+              const updateResponse = await fetch(`${API_BASE}/horarios/${registoExistente.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  horario: { 
+                    ...registoExistente, 
+                    localizacao: novaLocalizacao 
+                  } 
                 })
-                .catch(error => console.error('Erro ao buscar registro no Sheety:', error));
+              });
 
-              resolve(endereco);
-            } else {
-              resolve(null);
+              if (updateResponse.ok) {
+                resolve(novaLocalizacao);
+              } else {
+                reject('Erro ao atualizar localização');
+              }
             }
-          })
-          .catch(error => {
-            console.error('Erro na API OpenCage:', error);
-            resolve(null);
-          });
-
-      }, error => {
-        console.error('Erro na geolocalização:', error);
-        resolve(null);
-      }, options);
-
+          } else {
+            reject('Nenhum resultado de geolocalização encontrado');
+          }
+        } catch (error) {
+          reject(error);
+        }
+      }, function (error) {
+        reject(error);
+      });
     } else {
-      console.error('Geolocalização não suportada pelo navegador.');
-      resolve(null);
+      reject('Geolocalização não suportada');
     }
   });
+}
+
+async function registarMudancaObra() {
+  const exibirMensagemSucesso = () => {
+    const mensagemSucesso = document.getElementById('mensagem-sucesso');
+    if (mensagemSucesso) {
+      mensagemSucesso.style.display = 'block';
+      setTimeout(() => {
+        mensagemSucesso.style.display = 'none';
+      }, 3500);
+    }
+  };
+  try {
+    const nome = await verifyUserFace();
+    if (!nome) {
+      alert('Falha na verificação facial!');
+      return;
+    }
+
+    const dataFormatada = new Date().toLocaleDateString('pt-PT');
+    const endereco = await salvarLocalizacao(nome, dataFormatada);
+    
+    
+    
+  } catch (error) {
+    
+  }
+  exibirMensagemSucesso();
 }
 
 function formatarDuracao(horaEntrada, horaSaida, horaEntradaAlmoco, horaSaidaAlmoco) {
@@ -1427,13 +1453,9 @@ function adicionarOlhoParaSenha(passwordFieldId, iconElementId, linkElementId) {
   }
 }
 
-
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('overlay');
   sidebar.classList.toggle('open');
   overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
 }
-
-
-
