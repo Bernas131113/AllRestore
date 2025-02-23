@@ -321,9 +321,8 @@ async function verificarCredenciaisEscritorio() {
 
 
 
-async function picarPonto(tipo) {
+async function executarRegistroPonto(callback) {
   mostrarCarregamento();
-  let registoExistente;
   const exibirMensagemSucesso = () => {
     const mensagemSucesso = document.getElementById('mensagem-sucesso');
     if (mensagemSucesso) {
@@ -335,19 +334,17 @@ async function picarPonto(tipo) {
   };
 
   try {
-    // 1. Verificação facial para obter o NOME
+    // Passos comuns a todos os registros
     const nome = await verifyUserFace();
     if (!nome) {
       alert('Falha na verificação facial!');
       return;
     }
 
-    // 2. Obter dados necessários
     const obra = document.getElementById('obra')?.value || '';
     const credenciais = await obterCredenciais();
     const API_BASE = String(credenciais.API_BASE).trim();
     
-    // 3. Pré-carregar dados e validar usuário
     await preloadData(API_BASE);
     const { loginData, horariosData } = cache;
     
@@ -356,86 +353,125 @@ async function picarPonto(tipo) {
       return;
     }
 
-    // 4. Formatar data/hora
     const now = new Date();
-    const dataFormatada = now.toLocaleDateString('pt-PT'); // DD/MM/AAAA
+    const dataFormatada = now.toLocaleDateString('pt-PT');
     const horaFormatada = now.toTimeString().slice(0, 5);
 
-    // 5. Encontrar registro existente
-    registoExistente = horariosData.horarios.find(
+    const registoExistente = horariosData.horarios.find(
       item => item.nome === nome && item.data === dataFormatada
     );
 
-    // 6. Lógica principal por tipo de registro
-    const actions = {
-      entrada: async () => {
-        if (registoExistente) {
-          throw new Error('Já registou entrada hoje!');
-        }
+    // Executa a callback específica de cada tipo
+    await callback({
+      API_BASE,
+      registoExistente,
+      horaFormatada,
+      nome,
+      dataFormatada,
+      exibirMensagemSucesso,
+      obra
+    });
 
-        // Criar novo registro
-        const novoRegisto = {
-          nome,
-          data: dataFormatada,
-          horaEntrada: horaFormatada,
-          horaSaida: null,
-          entradaAlmoco: null,
-          saidaAlmoco: null,
-          localizacao: null
-        };
-
-        // POST inicial
-        const res = await fetch(`${API_BASE}/horarios`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ horario: novoRegisto })
-        });
-        exibirMensagemSucesso();
-        if (!res.ok) throw new Error('Erro ao registrar entrada');
-
-        // Salvar localização IMEDIATAMENTE após criação
-      
-          const endereco = await salvarLocalizacao(nome, dataFormatada);
-          console.log('Localização salva:', endereco);
-          
-          // Atualizar cache local
-          const novoRegistroComLocal = await res.json();
-          cache.horariosData.horarios.push(novoRegistroComLocal.horario);
-          exibirMensagemSucesso();
-
-      },
-
-      entradaAlmoco: async () => {
-        if (!registoExistente) throw new Error('Registre entrada primeiro!');
-        await updateField(API_BASE, registoExistente, 'entradaAlmoco', horaFormatada);
-      },
-
-      saidaAlmoco: async () => {
-        if (!registoExistente?.entradaAlmoco) throw new Error('Registre entrada do almoço primeiro!');
-        await updateField(API_BASE, registoExistente, 'saidaAlmoco', horaFormatada);
-      },
-
-      saida: async () => {
-        if (!registoExistente) throw new Error('Registre entrada primeiro!');
-        await updateField(API_BASE, registoExistente, 'horaSaida', horaFormatada);
-
-      }
-    };
-
-    await actions[tipo]();
     exibirMensagemSucesso();
-
   } catch (error) {
     console.error('Erro', error);
+    alert(error.message);
   } finally {
     esconderCarregamento();
-    // Atualizar dados após operação
-    cache.lastUpdate = 0; // Forçar refresh no próximo acesso
+    cache.lastUpdate = 0;
   }
-  
 }
 
+// Funções específicas para cada tipo de registro
+async function picarEntrada() {
+  await executarRegistroPonto(async (params) => {
+    const { API_BASE, registoExistente, horaFormatada, nome, dataFormatada, exibirMensagemSucesso } = params;
 
+    if (registoExistente) {
+      throw new Error('Já registou entrada hoje!');
+    }
+
+    const novoRegisto = {
+      nome,
+      data: dataFormatada,
+      horaEntrada: horaFormatada,
+      horaSaida: null,
+      entradaAlmoco: null,
+      saidaAlmoco: null,
+      localizacao: null
+    };
+
+    const res = await fetch(`${API_BASE}/horarios`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ horario: novoRegisto })
+    });
+    
+    if (!res.ok) throw new Error('Erro ao registrar entrada');
+    
+    exibirMensagemSucesso();
+    const endereco = await salvarLocalizacao(nome, dataFormatada);
+    console.log('Localização salva:', endereco);
+    
+    const novoRegistroComLocal = await res.json();
+    cache.horariosData.horarios.push(novoRegistroComLocal.horario);
+    exibirMensagemSucesso();
+  });
+}
+
+async function picarEntradaAlmoco() {
+  await executarRegistroPonto(async (params) => {
+    const { API_BASE, registoExistente, horaFormatada } = params;
+    
+    if (!registoExistente) {
+      throw new Error('Registre entrada primeiro!');
+    }
+    
+    await updateField(API_BASE, registoExistente, 'entradaAlmoco', horaFormatada);
+  });
+}
+
+async function picarSaidaAlmoco() {
+  await executarRegistroPonto(async (params) => {
+    const { API_BASE, registoExistente, horaFormatada } = params;
+    
+    if (!registoExistente?.entradaAlmoco) {
+      throw new Error('Registre entrada do almoço primeiro!');
+    }
+    
+    await updateField(API_BASE, registoExistente, 'saidaAlmoco', horaFormatada);
+  });
+}
+
+async function picarSaida() {
+  await executarRegistroPonto(async (params) => {
+    const { API_BASE, registoExistente, horaFormatada } = params;
+    
+    if (!registoExistente) {
+      throw new Error('Registre entrada primeiro!');
+    }
+    
+    await updateField(API_BASE, registoExistente, 'horaSaida', horaFormatada);
+  });
+}
+
+// Função auxiliar para atualizações de campos
+async function updateField(API_BASE, registro, field, value) {
+  const updated = { ...registro, [field]: value };
+  const res = await fetch(`${API_BASE}/horarios/${registro.id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ horario: updated })
+  });
+  
+  if (!res.ok) throw new Error(`Erro ao atualizar ${field}`);
+  
+  // Atualiza cache local
+  const index = cache.horariosData.horarios.findIndex(h => h.id === registro.id);
+  if (index > -1) {
+    cache.horariosData.horarios[index] = updated;
+  }
+}
 
 // Função updateField agora recebe API_BASE como parâmetro
 async function updateField(API_BASE, registoExistente, field, value) {

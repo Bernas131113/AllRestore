@@ -432,4 +432,19 @@ select:focus {
         font-size: 0.9rem;
         padding: 10px;
     }
+    #loading-message {
+    
+        margin-top: 30px;
+        margin-bottom:-20px;
+        margin-left: 170px;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 15px;
+        border-radius: 5px;
+        font-size: 18px;
+        text-align: center;
+        font-weight: bold;
+      }
+      
 }
