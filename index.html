@@ -56,10 +56,10 @@
        
         <form>          
             <div class="flex-center">
-                <button type="button" class="btn btn-green" onclick="picarEntrada()">Entrar</button>
-                <button type="button" class="btn btn-red" onclick="picarEntradaAlmoco()">Sair P/Almoço</button>
-                <button type="button" class="btn btn-green" onclick="picarSaidaAlmoco()">Entrar P/Trabalho</button>
-                <button type="button" class="btn btn-red" onclick="picarSaida()">Sair</button>
+                <button type="button" class="btn btn-green" onclick="picarPonto('entrada')">Entrar</button>
+                <button type="button" class="btn btn-red" onclick="picarPonto('entradaAlmoco')">Sair P/Almoço</button>
+                <button type="button" class="btn btn-green" onclick="picarPonto('saidaAlmoco')">Entrar P/Trabalho</button>
+                <button type="button" class="btn btn-red" onclick="picarPonto('saida')">Sair</button>
             </div>
             <div id="loading-message" style="display: none;">
                 A carregar...
