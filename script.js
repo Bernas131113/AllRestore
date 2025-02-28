@@ -1389,42 +1389,38 @@ function downloadExcel() {
     const tabela = document.getElementById('tabela-horariosadmin');
     if (!tabela) return;
 
+    // Converte a tabela HTML para um workbook do Excel
     const wb = XLSX.utils.table_to_book(tabela, { sheet: "Horários" });
     const ws = wb.Sheets["Horários"];
     if (!ws['!ref']) return;
 
+    // Obtém o intervalo de células do worksheet
     const range = XLSX.utils.decode_range(ws['!ref']);
-    const tbody = tabela.getElementsByTagName('tbody')[0];
-    if (!tbody) return;
 
     // Itera sobre as linhas do worksheet (pulando o cabeçalho)
     for (let row = range.s.r + 1; row <= range.e.r; row++) {
-      const htmlRow = tbody.rows[row - 1];
-      if (!htmlRow) continue;
+      // Formata a coluna "Total de Horas" (supondo que seja a 7ª coluna, índice 6)
+      const cellAddressHoras = { c: 6, r: row }; // Coluna G (índice 6)
+      const cellRefHoras = XLSX.utils.encode_cell(cellAddressHoras);
 
-      // Considera que a data está na segunda coluna (índice 1)
-      const dateCellText = htmlRow.cells[1].textContent.trim();
-      const partes = dateCellText.split('/');
-      if (partes.length === 3) {
-        const dia = parseInt(partes[0], 10);
-        const mes = parseInt(partes[1], 10);
-        const ano = parseInt(partes[2], 10);
-
-        const excelSerial = (Date.UTC(ano, mes - 1, dia) - Date.UTC(1899, 11, 30)) / (24 * 60 * 60 * 1000);
-        const cellAddress = { c: 1, r: row };
-        const cellRef = XLSX.utils.encode_cell(cellAddress);
-        ws[cellRef].v = excelSerial;
-        ws[cellRef].t = 'n';
-        ws[cellRef].z = 'dd/mm/yyyy';
+      // Obtém o valor da célula
+      const cell = ws[cellRefHoras];
+      if (cell && cell.v) {
+        // Converte o valor de texto (HH:MM:SS) para fração de dia (TIMEVALUE)
+        const [horas, minutos, segundos] = cell.v.split(':').map(Number);
+        const totalHoras = (horas + minutos / 60 + segundos / 3600) / 24; // Converte para fração de dia
+        cell.v = totalHoras; // Atualiza o valor da célula
+        cell.t = 'n'; // Define o tipo como número
+        cell.z = '[h]:mm:ss'; // Aplica o formato de horas acima de 24
       }
     }
 
+    // Gera o arquivo Excel
     XLSX.writeFile(wb, "Horas.xlsx");
   } catch (error) {
-    // Se necessário, trate erros aqui
+    console.error("Erro ao gerar o Excel:", error);
   }
 }
-
 function adicionarOlhoParaSenha(passwordFieldId, iconElementId, linkElementId) {
   const passwordField = document.getElementById(passwordFieldId);
   const togglePasswordIcon = document.getElementById(iconElementId);
